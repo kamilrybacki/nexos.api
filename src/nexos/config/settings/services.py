@@ -21,6 +21,7 @@ class NexosAIAPIConfiguration:
         yield cls.from_environ(environ=os.environ)  # type: ignore
 
     base_url: str = environ.var(help="Base URL for the API service.", converter=str)
+    api_key: str = environ.var(help="API key", converter=str)
     version: str = environ.var(
         default="v1",
         help="Version of the NEXOSAI API to use, e.g., 'v1'.",

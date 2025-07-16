@@ -1,6 +1,5 @@
-[
-  {
-    "endpoint": "post:/v1/chat/completions",
+{
+  "post:/v1/chat/completions": {
     "request": {
       "model": "6948fe4d-98ce-4f36-bc49-5f652cc07b65",
       "messages": [
@@ -32,8 +31,7 @@
       }
     }
   },
-  {
-    "endpoint": "post:/v1/completions",
+  "post:/v1/completions": {
     "request": {
       "model": "6948fe4d-98ce-4f36-bc49-5f652cc07b65",
       "prompt": "Once upon a time",
@@ -59,8 +57,7 @@
       }
     }
   },
-  {
-    "endpoint": "post:/v1/embeddings",
+  "post:/v1/embeddings": {
     "request": {
       "model": "6948fe4d-98ce-4f36-bc49-5f652cc07b65",
       "input": "Sample input text.",
@@ -83,8 +80,7 @@
       }
     }
   },
-  {
-    "endpoint": "post:/v1/audio/speech",
+  "post:/v1/audio/speech": {
     "request": {
       "model": "6948fe4d-98ce-4f36-bc49-5f652cc07b65",
       "input": "Hello world!",
@@ -96,8 +92,7 @@
       "audio_url": "https://api.nexos.ai/audio/generated/abc123.mp3"
     }
   },
-  {
-    "endpoint": "post:/v1/audio/transcriptions",
+  "post:/v1/audio/transcriptions": {
     "request": {
       "model": "6948fe4d-98ce-4f36-bc49-5f652cc07b65",
       "file": "<binary_data>",
@@ -110,8 +105,7 @@
       "text": "Hello world, this is a test transcription."
     }
   },
-  {
-    "endpoint": "post:/v1/audio/translations",
+  "post:/v1/audio/translations": {
     "request": {
       "model": "6948fe4d-98ce-4f36-bc49-5f652cc07b65",
       "file": "<binary_data>",
@@ -123,8 +117,7 @@
       "text": "Bonjour tout le monde"
     }
   },
-  {
-    "endpoint": "post:/v1/images/generations",
+  "post:/v1/images/generations": {
     "request": {
       "model": "6948fe4d-98ce-4f36-bc49-5f652cc07b65",
       "prompt": "A futuristic cityscape",
@@ -143,8 +136,7 @@
       ]
     }
   },
-  {
-    "endpoint": "post:/v1/images/edits",
+  "post:/v1/images/edits": {
     "request": {
       "model": "6948fe4d-98ce-4f36-bc49-5f652cc07b65",
       "image": "<binary_data>",
@@ -163,8 +155,7 @@
       ]
     }
   },
-  {
-    "endpoint": "post:/v1/images/variations",
+  "post:/v1/images/variations": {
     "request": {
       "model": "6948fe4d-98ce-4f36-bc49-5f652cc07b65",
       "image": "<binary_data>",
@@ -180,8 +171,7 @@
       ]
     }
   },
-  {
-    "endpoint": "post:/v1/storage",
+  "post:/v1/storage": {
     "request": {
       "file": "<binary_data>",
       "purpose": "assistants"
@@ -195,8 +185,7 @@
       "purpose": "assistants"
     }
   },
-  {
-    "endpoint": "get:/v1/storage",
+  "get:/v1/storage": {
     "request": {
       "limit": 2,
       "order": "desc",
@@ -223,16 +212,14 @@
       ]
     }
   },
-  {
-    "endpoint": "delete:/v1/storage/file-abc123",
+  "delete:/v1/storage/file-abc123": {
     "request": {},
     "response": {
       "id": "file-abc123",
       "deleted": true
     }
   },
-  {
-    "endpoint": "get:/v1/models",
+  "get:/v1/models": {
     "request": {},
     "response": {
       "object": "list",
@@ -253,8 +240,7 @@
       "total": 2
     }
   },
-  {
-    "endpoint": "get:/v1/teams/team-987/api_keys",
+  "get:/v1/teams/team-987/api_keys": {
     "request": {},
     "response": [
       {
@@ -273,8 +259,7 @@
       }
     ]
   },
-  {
-    "endpoint": "post:/v1/teams/team-987/api_keys",
+  "post:/v1/teams/team-987/api_keys": {
     "request": {
       "name": "New Automation Key"
     },
@@ -286,8 +271,7 @@
       "updated_at": "2025-07-15T14:10:00Z"
     }
   },
-  {
-    "endpoint": "patch:/v1/teams/team-987/api_keys/key-001/regenerate",
+  "patch:/v1/teams/team-987/api_keys/key-001/regenerate": {
     "request": {},
     "response": {
       "api_key": "nexos-regen-1234567890",
@@ -297,4 +281,4 @@
       "updated_at": "2025-07-15T14:11:00Z"
     }
   }
-]
+}

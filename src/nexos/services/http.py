@@ -8,6 +8,7 @@ import httpx
 import tenacity
 
 from nexos.config.settings.services import NexosAIAPIConfiguration
+from src.nexos.config.settings.defaults import NEXOSAI_AUTH_HEADER_NAME, NEXOSAI_AUTH_HEADER_PREFIX
 
 
 @dataclasses.dataclass
@@ -44,6 +45,7 @@ class NexosHTTPAPIService:
             Create an instance of httpx.AsyncClient with the provided configuration.
             """
             return httpx.AsyncClient(
+                base_url=self.base_url,
                 timeout=httpx.Timeout(config.timeout),
                 headers=self.construct_headers(config),
                 auth=self.construct_auth(config),
@@ -52,14 +54,16 @@ class NexosHTTPAPIService:
         self.__client = __spawn_client
         self._request = retry_strategy(self._request)
 
-    def construct_headers(self, config: NexosAIAPIConfiguration) -> dict[str, str]:  # noqa: ARG002
+    def construct_headers(self, config: NexosAIAPIConfiguration) -> dict[str, str]:
         """
         Construct headers for the HTTP request.
 
         :param config: The configuration for the API service.
         :return: A dictionary of headers.
         """
-        return {}
+        return {
+            NEXOSAI_AUTH_HEADER_NAME: f"{NEXOSAI_AUTH_HEADER_PREFIX} {config.api_key}",
+        }
 
     def construct_auth(self, config: NexosAIAPIConfiguration) -> httpx.Auth | None:  # noqa: ARG002
         """
@@ -77,12 +81,12 @@ class NexosHTTPAPIService:
         :param verb: The HTTP method to use (e.g., 'GET', 'POST').
         :return: The HTTP response.
         """
-        full_url = urljoin(self.base_url, url) if not override_base else url
+        full_url = url if override_base else f"{self.base_url}/{url.lstrip('/')}"
         if not self.__client:
             message = "[HTTP] Client was not initialized."
             raise RuntimeError(message)
         async with await self.__client() as spawned_client:
-            response = await spawned_client.request(verb, full_url, follow_redirects=self.__follow_redirects)
+            response = await spawned_client.request(method=verb, url=full_url, follow_redirects=self.__follow_redirects)
             response.raise_for_status()
             return response
 

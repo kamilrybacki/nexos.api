@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image
-FROM python:3.10-slim
+FROM python:3.13-slim
 
 # Set the working directory in the container
 WORKDIR /app
@@ -11,5 +11,4 @@ COPY main.py data.json /app/
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir fastapi uvicorn
 
-# Expose the port FastAPI will run on
 EXPOSE 5000

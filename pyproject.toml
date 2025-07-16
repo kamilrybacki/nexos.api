@@ -70,7 +70,9 @@ ignore = [
     "EM101",
     "EM102",
     "LOG015",
-    "S101"
+    "S101",
+    "ASYNC210",
+    "TC001"
 ]
 
 [tool.mypy]

@@ -14,7 +14,7 @@ mock_nexos_router = fastapi.APIRouter()
 
 
 @asynccontextmanager
-async def lifespan() -> typing.AsyncGenerator[None]:
+async def lifespan(_: fastapi.FastAPI) -> typing.AsyncGenerator[None]:
     """
     Lifespan event handler to set up routes when the application starts.
     """
@@ -37,7 +37,6 @@ expected_api_key = os.environ.get("MOCK_NEXOS__API_KEY")
 
 
 class MockAPIRouteDefinition(typing.TypedDict):
-    endpoint: str
     request: dict[str, typing.Any]
     response: dict[str, typing.Any]
 
@@ -71,16 +70,15 @@ def endpoint_to_handler(
 
 def setup_routes() -> None:
     with Path.open(Path(__file__).parent / "data.json") as file:
-        mock_responses: list[MockAPIRouteDefinition] = json.load(file)
+        mock_responses: dict[str, MockAPIRouteDefinition] = json.load(file)
         logging.info(f"[API] Setting up {len(mock_responses)} routes")
-        for route_index in range(len(mock_responses)):
-            route = mock_responses[route_index]
-            handler = endpoint_to_handler(route["endpoint"], route["response"])
+        for route_endpoint, route_definition in mock_responses.items():
+            handler = endpoint_to_handler(route_endpoint, route_definition["response"])
             mock_nexos_router.add_api_route(
-                path=route["endpoint"].split(":", 1)[1].strip(),
+                path=route_endpoint.split(":", 1)[1].strip(),
                 endpoint=handler,
-                methods=[route["endpoint"].split(":")[0].strip().upper()],
-                name=f"{route['endpoint'].replace(':', '_').replace('/', '_').strip('_')}",
+                methods=[route_endpoint.split(":")[0].strip().upper()],
+                name=f"{route_endpoint.replace(':', '_').replace('/', '_').strip('_')}",
             )
 
 
