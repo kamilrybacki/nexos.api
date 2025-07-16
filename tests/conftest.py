@@ -8,7 +8,7 @@ import testcontainers.core.waiting_utils
 
 import tests.common
 
-pytest_plugins = ["tests.mocks"]
+pytest_plugins = ["tests.services"]
 
 ASSETS_DIR = Path(__file__).parent / "assets"
 

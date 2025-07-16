@@ -26,20 +26,6 @@ class NexosHTTPAPIService:
             self.initialize(initialized_config)
 
     def initialize(self, config: NexosAIAPIConfiguration) -> None:
-        try:
-            self._loop = asyncio.get_event_loop()
-        except RuntimeError:
-            # If there is no current event loop, create a new one
-            self._loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(self._loop)
-
-        if self._loop.is_closed() or self._loop is None:
-            self._loop = asyncio.new_event_loop()
-
-        asyncio.set_event_loop(self._loop)
-        self._loop.run_until_complete(self._initialize(config))
-
-    async def _initialize(self, config: NexosAIAPIConfiguration) -> None:
         self.__follow_redirects = config.follow_redirects
         retry_strategy = tenacity.retry(
             stop=tenacity.stop_after_attempt(config.retries),
@@ -51,7 +37,7 @@ class NexosHTTPAPIService:
             reraise=config.reraise_exceptions,
             retry=tenacity.retry_if_exception_type(httpx.HTTPError),
         )
-        self.base_url = config.base_url
+        self.base_url = urljoin(config.base_url, config.version)
 
         async def __spawn_client() -> httpx.AsyncClient:
             """
