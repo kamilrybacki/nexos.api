@@ -11,7 +11,7 @@ from testcontainers.core.container import DockerContainer
 from testcontainers.core.image import DockerImage
 from testcontainers.core.waiting_utils import wait_for_logs
 
-from nexos.services.http import NexosHTTPAPIService
+from nexosapi.services.http import NexosAPIService
 from tests.conftest import ASSETS_DIR
 
 MOCK_API_DIR = ASSETS_DIR / "mock_api"
@@ -32,8 +32,8 @@ def service_environment(monkeypatch: pytest.MonkeyPatch) -> Callable[..., Genera
 
 
 @pytest.fixture
-def initialize_nexosai_api_service() -> Callable[[], NexosHTTPAPIService]:
-    return lambda: NexosHTTPAPIService()
+def initialize_nexosai_api_service() -> Callable[[], NexosAPIService]:
+    return lambda: NexosAPIService()
 
 
 MOCK_API_DATA_JSON_PATH = (ASSETS_DIR / "mock_api" / "data.json").as_posix()

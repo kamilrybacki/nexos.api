@@ -1,7 +1,11 @@
-from pydantic import BaseModel, conint
+import typing
+
+from pydantic import conint
+
+from nexosapi.domain.base import NullableBaseModel
 
 
-class Model(BaseModel):
+class Model(NullableBaseModel):
     id: str
     object: str
     created: int
@@ -11,42 +15,42 @@ class Model(BaseModel):
     stream_timeout_ms: conint(ge=1) | None = None
 
 
-class FunctionCall(BaseModel):
+class FunctionCall(NullableBaseModel):
     name: str
     arguments: str
 
 
-class ToolCall(BaseModel):
+class ToolCall(NullableBaseModel):
     id: str
     type: str
     function: FunctionCall
 
 
-class UrlCitation(BaseModel):
+class UrlCitation(NullableBaseModel):
     end_index: int
     start_index: int
     title: str
     url: str
 
 
-class Annotation(BaseModel):
+class Annotation(NullableBaseModel):
     type: str
     url_citation: UrlCitation
 
 
-class CompletionTokenDetails(BaseModel):
+class CompletionTokenDetails(NullableBaseModel):
     accepted_prediction_tokens: int
     rejected_prediction_tokens: int
     audio_tokens: int
     reasoning_tokens: int
 
 
-class PromptTokenDetails(BaseModel):
+class PromptTokenDetails(NullableBaseModel):
     audio_tokens: int
     cached_tokens: int
 
 
-class UsageInfo(BaseModel):
+class UsageInfo(NullableBaseModel):
     total_tokens: int
     prompt_tokens: int | None
     completion_tokens: int | None
@@ -64,6 +68,7 @@ class LogProbs(LogProb):
     top_logprobs: list[LogProb]
 
 
-class LogProbsInfo(BaseModel):
+class LogProbsInfo(NullableBaseModel):
+    model_config: typing.ClassVar[dict[str, typing.Any]] = {"arbitrary_types_allowed": True}
     content: LogProbs
     refusal: LogProbs

@@ -1,8 +1,8 @@
-from typing import Any, ClassVar, Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, conint, constr
 
-from nexos.domain.data import ChatMessage
+from nexosapi.domain.data import ChatMessage
 
 
 class NexosAPIRequest(BaseModel):
@@ -10,28 +10,7 @@ class NexosAPIRequest(BaseModel):
     Base class for all API requests to the NEXOS API.
     This class serves as a foundation for defining specific API request models.
     It can be extended to create more specific request models for different API endpoints.
-
-    :cvar: _endpoint: The path of the API endpoint.
     """
-
-    _endpoint: ClassVar[str]
-
-    @classmethod
-    def _validate_endpoint(cls, endpoint: str) -> None:
-        """
-        Validates the endpoint format.
-        Raises ValueError if the endpoint does not match the expected format.
-
-        :param endpoint: The API endpoint to validate.
-        """
-        verbs = ("get:", "post:", "put:", "delete:", "patch:")
-        if not isinstance(endpoint, str) or not endpoint.startswith(verbs):
-            raise ValueError(f"Invalid endpoint format: {endpoint}. Must start with one of {verbs}.")
-
-    def __init_subclass__(cls, **kwargs: Any) -> None:
-        if cls._endpoint is None or not isinstance(cls._endpoint, str):
-            raise ValueError("Subclasses of NexosAPIRequest must define a valid '_endpoint' class variable.")
-        cls._validate_endpoint(cls._endpoint)
 
 
 class ChatCompletionsRequest(NexosAPIRequest):

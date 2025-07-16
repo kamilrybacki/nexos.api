@@ -7,12 +7,12 @@ from urllib.parse import urljoin
 import httpx
 import tenacity
 
-from nexos.config.settings.services import NexosAIAPIConfiguration
-from src.nexos.config.settings.defaults import NEXOSAI_AUTH_HEADER_NAME, NEXOSAI_AUTH_HEADER_PREFIX
+from nexosapi.config.settings.services import NexosAIAPIConfiguration
+from src.nexosapi.config.settings.defaults import NEXOSAI_AUTH_HEADER_NAME, NEXOSAI_AUTH_HEADER_PREFIX
 
 
 @dataclasses.dataclass
-class NexosHTTPAPIService:
+class NexosAPIService:
     """
     Abstract class for asynchronous services.
     """

@@ -2,11 +2,11 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from nexos.services.http import NexosHTTPAPIService
+from nexosapi.services.http import NexosAPIService
 
 
 @pytest.mark.asyncio
-@patch.object(NexosHTTPAPIService, "_request", new_callable=AsyncMock)
+@patch.object(NexosAPIService, "_request", new_callable=AsyncMock)
 async def test_get_request(mock_request, initialize_nexosai_api_service, service_environment) -> None:
     with service_environment(
         {
@@ -21,7 +21,7 @@ async def test_get_request(mock_request, initialize_nexosai_api_service, service
 
 
 @pytest.mark.asyncio
-@patch.object(NexosHTTPAPIService, "_request", new_callable=AsyncMock)
+@patch.object(NexosAPIService, "_request", new_callable=AsyncMock)
 async def test_post_request(mock_request, initialize_nexosai_api_service, service_environment) -> None:
     with service_environment(
         {
@@ -36,7 +36,7 @@ async def test_post_request(mock_request, initialize_nexosai_api_service, servic
 
 
 @pytest.mark.asyncio
-@patch.object(NexosHTTPAPIService, "_request", new_callable=AsyncMock)
+@patch.object(NexosAPIService, "_request", new_callable=AsyncMock)
 async def test_head_request(mock_request, initialize_nexosai_api_service, service_environment) -> None:
     with service_environment(
         {
@@ -51,7 +51,7 @@ async def test_head_request(mock_request, initialize_nexosai_api_service, servic
 
 
 @pytest.mark.asyncio
-@patch.object(NexosHTTPAPIService, "_request", new_callable=AsyncMock)
+@patch.object(NexosAPIService, "_request", new_callable=AsyncMock)
 async def test_request_with_override_base(mock_request, initialize_nexosai_api_service, service_environment) -> None:
     with service_environment(
         {

@@ -4,7 +4,7 @@ from collections.abc import Generator
 
 import environ
 
-from nexos.config.settings.defaults import NEXOSAI_CONFIGURATION_PREFIX
+from nexosapi.config.settings.defaults import NEXOSAI_CONFIGURATION_PREFIX
 
 
 @environ.config(prefix=NEXOSAI_CONFIGURATION_PREFIX)
