@@ -1,0 +1,89 @@
+version: '3'
+
+vars:
+  FULL_PACKAGER_COMMAND: ".venv/bin/python -m poetry"
+  PYTHON_VERSION: "3.13"
+
+tasks:
+  install-dev:
+    desc: Install development dependencies
+    cmds:
+      - "{{.FULL_PACKAGER_COMMAND}} lock"
+      - "{{.FULL_PACKAGER_COMMAND}} install --all-groups"
+
+  install-prod:
+    desc: Install production dependencies
+    cmds:
+      - "{{.FULL_PACKAGER_COMMAND}} install --no-dev"
+
+  enable-pre-commit:
+    desc: Enable pre-commit hooks
+    cmds:
+      - | 
+        if [ ! -f ".pre-commit-config.yaml" ]; then
+          echo "No pre-commit configuration found. Skipping pre-commit setup."
+          exit 0
+        fi
+        {{.FULL_PACKAGER_COMMAND}} run pre-commit install
+        {{.FULL_PACKAGER_COMMAND}} run pre-commit autoupdate
+
+  initialize-venv:
+    desc: Initialize the virtual environment
+    cmds:
+      - |
+        if [ ! -d ".venv" ]; then
+          echo "Creating virtual environment at .venv"
+          python -m virtualenv --python={{.PYTHON_VERSION}} .venv
+          source .venv/bin/activate || . .venv/bin/activate || true
+          .venv/bin/python -m pip install --upgrade poetry
+          {{.FULL_PACKAGER_COMMAND}} config virtualenvs.path .venv
+          {{.FULL_PACKAGER_COMMAND}} config virtualenvs.create false
+          {{.FULL_PACKAGER_COMMAND}} config cache-dir {{.RELATIVE_CACHE_PATH}}
+          {{.FULL_PACKAGER_COMMAND}} config virtualenvs.in-project true
+        fi
+
+  init-project:
+    desc: Initialize the project and install dependencies
+    cmds:
+      - task: initialize-venv
+      - task: install-dev
+      - task: enable-pre-commit
+
+  lint:
+    desc: Run linters and formatters
+    cmds:
+      - "{{.FULL_PACKAGER_COMMAND}} run ruff check --config pyproject.toml"
+      - "{{.FULL_PACKAGER_COMMAND}} run mypy . --config-file pyproject.toml"
+
+  format:
+    desc: Format the codebase
+    cmds:
+      - "{{.FULL_PACKAGER_COMMAND}} run ruff check --fix-only --config pyproject.toml"
+      - "{{.FULL_PACKAGER_COMMAND}} run ruff format --config pyproject.toml"
+
+  test:
+    desc: Run tests
+    env:
+      TESTCONTAINERS_HOST_OVERRIDE: "127.0.0.1"
+    cmds:
+      - "{{.FULL_PACKAGER_COMMAND}} run pytest --config-file pyproject.toml -svv"
+
+  test-chosen:
+    desc: Run tests marked as "chosen"
+    env:
+      TESTCONTAINERS_HOST_OVERRIDE: "127.0.0.1"
+    cmds:
+      - "{{.FULL_PACKAGER_COMMAND}} run pytest --config-file pyproject.toml -svv -m 'chosen'"
+
+  test-offline:
+    desc: Run tests that can be run offline
+    env:
+      TESTCONTAINERS_HOST_OVERRIDE: "127.0.0.1"
+    cmds:
+      - "{{.FULL_PACKAGER_COMMAND}} run pytest --config-file pyproject.toml -svv -m 'offline'"
+
+  serve-mock-api:
+    desc: Serve the mock API
+    cmds:
+      - "docker compose -f ./tests/assets/mock_api/docker-compose.yaml up --build --detach"
+      - "docker compose -f ./tests/assets/mock_api/docker-compose.yaml watch --no-up"

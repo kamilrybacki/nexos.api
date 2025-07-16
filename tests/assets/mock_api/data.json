@@ -1,0 +1,300 @@
+[
+  {
+    "endpoint": "post:/v1/chat/completions",
+    "request": {
+      "model": "6948fe4d-98ce-4f36-bc49-5f652cc07b65",
+      "messages": [
+        { "role": "user", "content": "What is the capital of France?" }
+      ],
+      "store": false,
+      "n": 1,
+      "modalities": ["text"]
+    },
+    "response": {
+      "id": "chatcmpl-xyz123",
+      "object": "chat.completion",
+      "created": 1723456789,
+      "model": "6948fe4d-98ce-4f36-bc49-5f652cc07b65",
+      "choices": [
+        {
+          "index": 0,
+          "message": {
+            "role": "assistant",
+            "content": "The capital of France is Paris."
+          },
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 10,
+        "completion_tokens": 9,
+        "total_tokens": 19
+      }
+    }
+  },
+  {
+    "endpoint": "post:/v1/completions",
+    "request": {
+      "model": "6948fe4d-98ce-4f36-bc49-5f652cc07b65",
+      "prompt": "Once upon a time",
+      "max_tokens": 16
+    },
+    "response": {
+      "id": "cmpl-xyz789",
+      "object": "text_completion",
+      "created": 1723456000,
+      "model": "6948fe4d-98ce-4f36-bc49-5f652cc07b65",
+      "choices": [
+        {
+          "text": " there was a dragon who loved poetry.",
+          "index": 0,
+          "logprobs": null,
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 4,
+        "completion_tokens": 10,
+        "total_tokens": 14
+      }
+    }
+  },
+  {
+    "endpoint": "post:/v1/embeddings",
+    "request": {
+      "model": "6948fe4d-98ce-4f36-bc49-5f652cc07b65",
+      "input": "Sample input text.",
+      "encoding_format": "float",
+      "dimensions": 1536
+    },
+    "response": {
+      "object": "list",
+      "data": [
+        {
+          "object": "embedding",
+          "embedding": [0.0012, -0.0043, 0.0081],
+          "index": 0
+        }
+      ],
+      "model": "6948fe4d-98ce-4f36-bc49-5f652cc07b65",
+      "usage": {
+        "prompt_tokens": 5,
+        "total_tokens": 5
+      }
+    }
+  },
+  {
+    "endpoint": "post:/v1/audio/speech",
+    "request": {
+      "model": "6948fe4d-98ce-4f36-bc49-5f652cc07b65",
+      "input": "Hello world!",
+      "voice": "echo",
+      "response_format": "mp3",
+      "speed": 1
+    },
+    "response": {
+      "audio_url": "https://api.nexos.ai/audio/generated/abc123.mp3"
+    }
+  },
+  {
+    "endpoint": "post:/v1/audio/transcriptions",
+    "request": {
+      "model": "6948fe4d-98ce-4f36-bc49-5f652cc07b65",
+      "file": "<binary_data>",
+      "language": "en",
+      "response_format": "json",
+      "temperature": 0.2,
+      "timestamp_granularities": ["word"]
+    },
+    "response": {
+      "text": "Hello world, this is a test transcription."
+    }
+  },
+  {
+    "endpoint": "post:/v1/audio/translations",
+    "request": {
+      "model": "6948fe4d-98ce-4f36-bc49-5f652cc07b65",
+      "file": "<binary_data>",
+      "prompt": "Translate with emphasis on speed.",
+      "response_format": "json",
+      "temperature": 0.4
+    },
+    "response": {
+      "text": "Bonjour tout le monde"
+    }
+  },
+  {
+    "endpoint": "post:/v1/images/generations",
+    "request": {
+      "model": "6948fe4d-98ce-4f36-bc49-5f652cc07b65",
+      "prompt": "A futuristic cityscape",
+      "n": 1,
+      "quality": "standard",
+      "response_format": "url",
+      "size": "512x512",
+      "style": "vivid"
+    },
+    "response": {
+      "created": 1723456700,
+      "data": [
+        {
+          "url": "https://api.nexos.ai/images/gen/cityscape.png"
+        }
+      ]
+    }
+  },
+  {
+    "endpoint": "post:/v1/images/edits",
+    "request": {
+      "model": "6948fe4d-98ce-4f36-bc49-5f652cc07b65",
+      "image": "<binary_data>",
+      "mask": "<binary_data>",
+      "prompt": "Add a red apple on the table",
+      "n": 1,
+      "response_format": "url",
+      "size": "1024x1024"
+    },
+    "response": {
+      "created": 1723456711,
+      "data": [
+        {
+          "url": "https://api.nexos.ai/images/edits/apple_edit.png"
+        }
+      ]
+    }
+  },
+  {
+    "endpoint": "post:/v1/images/variations",
+    "request": {
+      "model": "6948fe4d-98ce-4f36-bc49-5f652cc07b65",
+      "image": "<binary_data>",
+      "n": 2,
+      "response_format": "b64_json",
+      "size": "256x256"
+    },
+    "response": {
+      "created": 1723456722,
+      "data": [
+        { "b64_json": "<base64image1>" },
+        { "b64_json": "<base64image2>" }
+      ]
+    }
+  },
+  {
+    "endpoint": "post:/v1/storage",
+    "request": {
+      "file": "<binary_data>",
+      "purpose": "assistants"
+    },
+    "response": {
+      "size": 204800,
+      "created_at": 1723456100,
+      "expires_at": 1726048100,
+      "filename": "document.pdf",
+      "id": "file-xyz789",
+      "purpose": "assistants"
+    }
+  },
+  {
+    "endpoint": "get:/v1/storage",
+    "request": {
+      "limit": 2,
+      "order": "desc",
+      "purpose": "user_data"
+    },
+    "response": {
+      "data": [
+        {
+          "size": 102400,
+          "created_at": 1723456000,
+          "expires_at": 1726048000,
+          "filename": "notes.txt",
+          "id": "file-abc123",
+          "purpose": "user_data"
+        },
+        {
+          "size": 40960,
+          "created_at": 1723455900,
+          "expires_at": 1726047900,
+          "filename": "audio.wav",
+          "id": "file-def456",
+          "purpose": "user_data"
+        }
+      ]
+    }
+  },
+  {
+    "endpoint": "delete:/v1/storage/file-abc123",
+    "request": {},
+    "response": {
+      "id": "file-abc123",
+      "deleted": true
+    }
+  },
+  {
+    "endpoint": "get:/v1/models",
+    "request": {},
+    "response": {
+      "object": "list",
+      "data": [
+        {
+          "id": "6948fe4d-98ce-4f36-bc49-5f652cc07b65",
+          "object": "model",
+          "created": 1712345678,
+          "owned_by": "nexos"
+        },
+        {
+          "id": "embedding-v2",
+          "object": "model",
+          "created": 1712350000,
+          "owned_by": "nexos"
+        }
+      ],
+      "total": 2
+    }
+  },
+  {
+    "endpoint": "get:/v1/teams/team-987/api_keys",
+    "request": {},
+    "response": [
+      {
+        "api_key": "nexos-abcde12345",
+        "id": "key-001",
+        "name": "Production",
+        "created_at": "2024-11-19T10:00:00Z",
+        "updated_at": "2024-11-19T12:00:00Z"
+      },
+      {
+        "api_key": "nexos-fghij67890",
+        "id": "key-002",
+        "name": "Staging",
+        "created_at": "2024-12-01T08:30:00Z",
+        "updated_at": "2024-12-01T09:00:00Z"
+      }
+    ]
+  },
+  {
+    "endpoint": "post:/v1/teams/team-987/api_keys",
+    "request": {
+      "name": "New Automation Key"
+    },
+    "response": {
+      "api_key": "nexos-kjfdsl8989jwe",
+      "id": "key-003",
+      "name": "New Automation Key",
+      "created_at": "2025-07-15T14:10:00Z",
+      "updated_at": "2025-07-15T14:10:00Z"
+    }
+  },
+  {
+    "endpoint": "patch:/v1/teams/team-987/api_keys/key-001/regenerate",
+    "request": {},
+    "response": {
+      "api_key": "nexos-regen-1234567890",
+      "id": "key-001",
+      "name": "Production",
+      "created_at": "2024-11-19T10:00:00Z",
+      "updated_at": "2025-07-15T14:11:00Z"
+    }
+  }
+]

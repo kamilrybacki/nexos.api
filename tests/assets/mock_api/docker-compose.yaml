@@ -1,0 +1,21 @@
+version: "3.9"
+
+services:
+  mock_api:
+    image: "mockapi/mockapi:latest"
+    ports:
+      - "5000:5000"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./main.py
+          target: /app/main.py
+        - action: rebuild
+          path: ./data.json
+    restart: always
+    environment:
+      MOCK_NEXOS__API_KEY: "let-me-in"
+    entrypoint: "uvicorn main:mock_nexos --host 0.0.0.0 --port 5000 --reload --reload-dir /app"

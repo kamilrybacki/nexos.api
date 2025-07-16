@@ -1,0 +1,3 @@
+NEXOSAI_CONFIGURATION_PREFIX = "NEXOSAI_"
+NEXOSAI_BASE_URL = "https://api.magicthegathering.io"
+NEXOSAI_API_VERSION = "v1"

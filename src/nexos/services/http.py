@@ -1,0 +1,140 @@
+import asyncio
+import dataclasses
+from collections.abc import Callable, Coroutine
+from typing import Any
+from urllib.parse import urljoin
+
+import httpx
+import tenacity
+
+from nexos.config.settings.services import NexosAIAPIConfiguration
+
+
+@dataclasses.dataclass
+class NexosHTTPAPIService:
+    """
+    Abstract class for asynchronous services.
+    """
+
+    base_url: str = dataclasses.field(init=False)
+    _loop: asyncio.AbstractEventLoop | None = dataclasses.field(default=None, init=False)
+    __client: Callable[[], Coroutine[None, None, httpx.AsyncClient]] | None = dataclasses.field(init=False, repr=False)
+    __follow_redirects: bool = dataclasses.field(init=False, default=True)
+
+    def __post_init__(self) -> None:
+        with NexosAIAPIConfiguration.use() as initialized_config:
+            self.initialize(initialized_config)
+
+    def initialize(self, config: NexosAIAPIConfiguration) -> None:
+        try:
+            self._loop = asyncio.get_event_loop()
+        except RuntimeError:
+            # If there is no current event loop, create a new one
+            self._loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(self._loop)
+
+        if self._loop.is_closed() or self._loop is None:
+            self._loop = asyncio.new_event_loop()
+
+        asyncio.set_event_loop(self._loop)
+        self._loop.run_until_complete(self._initialize(config))
+
+    async def _initialize(self, config: NexosAIAPIConfiguration) -> None:
+        self.__follow_redirects = config.follow_redirects
+        retry_strategy = tenacity.retry(
+            stop=tenacity.stop_after_attempt(config.retries),
+            wait=tenacity.wait_exponential(
+                multiplier=config.exponential_backoff,
+                min=config.minimum_wait,
+                max=config.maximum_wait,
+            ),
+            reraise=config.reraise_exceptions,
+            retry=tenacity.retry_if_exception_type(httpx.HTTPError),
+        )
+        self.base_url = config.base_url
+
+        async def __spawn_client() -> httpx.AsyncClient:
+            """
+            Create an instance of httpx.AsyncClient with the provided configuration.
+            """
+            return httpx.AsyncClient(
+                timeout=httpx.Timeout(config.timeout),
+                headers=self.construct_headers(config),
+                auth=self.construct_auth(config),
+            )
+
+        self.__client = __spawn_client
+        self._request = retry_strategy(self._request)
+
+    def construct_headers(self, config: NexosAIAPIConfiguration) -> dict[str, str]:  # noqa: ARG002
+        """
+        Construct headers for the HTTP request.
+
+        :param config: The configuration for the API service.
+        :return: A dictionary of headers.
+        """
+        return {}
+
+    def construct_auth(self, config: NexosAIAPIConfiguration) -> httpx.Auth | None:  # noqa: ARG002
+        """
+        Construct authentication for the HTTP request.
+
+        :param config: The configuration for the API service.
+        :return: A httpx.Auth object or None if no authentication is needed.
+        """
+        return None
+
+    async def _request(self, verb: str, url: str, override_base: bool = False) -> httpx.Response:  # noqa: FBT001, FBT002
+        """
+        Send an HTTP request using the configured client.
+
+        :param verb: The HTTP method to use (e.g., 'GET', 'POST').
+        :return: The HTTP response.
+        """
+        full_url = urljoin(self.base_url, url) if not override_base else url
+        if not self.__client:
+            message = "[HTTP] Client was not initialized."
+            raise RuntimeError(message)
+        async with await self.__client() as spawned_client:
+            response = await spawned_client.request(verb, full_url, follow_redirects=self.__follow_redirects)
+            response.raise_for_status()
+            return response
+
+    async def disconnect(self) -> None:
+        """
+        Disconnect the HTTP client.
+        """
+        if self.__client:
+            self.__client = None
+        else:
+            message = "[HTTP] Client was not initialized."
+            raise RuntimeError(message)
+
+    # Available HTTP methods
+
+    async def get(self, url: str, **kwargs: Any) -> httpx.Response:
+        """
+        Send a GET request to the specified URL.
+
+        :param url: The URL to send the GET request to.
+        :return: The HTTP response.
+        """
+        return await self._request("GET", url, **kwargs)
+
+    async def post(self, url: str, **kwargs: Any) -> httpx.Response:
+        """
+        Send a POST request to the specified URL.
+
+        :param url: The URL to send the POST request to.
+        :return: The HTTP response.
+        """
+        return await self._request("POST", url, **kwargs)
+
+    async def head(self, url: str, **kwargs: Any) -> httpx.Response:
+        """
+        Send a HEAD request to the specified URL.
+
+        :param url: The URL to send the HEAD request to.
+        :return: The HTTP response.
+        """
+        return await self._request("HEAD", url, **kwargs)
