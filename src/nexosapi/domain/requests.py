@@ -14,8 +14,6 @@ class NexosAPIRequest(BaseModel):
 
 
 class ChatCompletionsRequest(NexosAPIRequest):
-    _endpoint = "post:/v1/chat/completions"
-
     model: str
     messages: list[ChatMessage]
     store: bool | None = False
@@ -46,8 +44,6 @@ class ChatCompletionsRequest(NexosAPIRequest):
 
 
 class EmbeddingRequest(NexosAPIRequest):
-    _endpoint = "post:/v1/embeddings"
-
     model: str
     input: str | list[str] | list[int] | list[list[int]]
     encoding_format: Literal["float", "base64"] | None = "float"
@@ -55,8 +51,6 @@ class EmbeddingRequest(NexosAPIRequest):
 
 
 class AudioSpeechRequest(NexosAPIRequest):
-    _endpoint = "post:/v1/audio/speech"
-
     model: str
     input: constr(max_length=4096)
     voice: Literal["alloy", "echo", "fable", "onyx", "nova", "shimmer"]
@@ -65,8 +59,6 @@ class AudioSpeechRequest(NexosAPIRequest):
 
 
 class AudioTranscriptionRequest(NexosAPIRequest):
-    _endpoint = "post:/v1/audio/transcriptions"
-
     model: str
     language: str | None = None
     prompt: str | None = None
@@ -76,8 +68,6 @@ class AudioTranscriptionRequest(NexosAPIRequest):
 
 
 class AudioTranslationRequest(NexosAPIRequest):
-    _endpoint = "post:/v1/audio/translations"
-
     model: str
     prompt: str | None = None
     response_format: Literal["json", "text", "srt", "verbose_json", "vtt"] | None = "json"
@@ -85,8 +75,6 @@ class AudioTranslationRequest(NexosAPIRequest):
 
 
 class ImageGenerationRequest(NexosAPIRequest):
-    _endpoint = "post:/v1/images/generations"
-
     prompt: str
     model: str
     n: int | None = 1
@@ -97,8 +85,6 @@ class ImageGenerationRequest(NexosAPIRequest):
 
 
 class ImageEditRequest(NexosAPIRequest):
-    _endpoint = "post:/v1/images/edits"
-
     prompt: constr(max_length=1000)
     model: str
     n: int | None = 1
@@ -107,8 +93,6 @@ class ImageEditRequest(NexosAPIRequest):
 
 
 class ImageVariationRequest(NexosAPIRequest):
-    _endpoint = "post:/v1/images/variations"
-
     model: str
     n: int | None = 1
     response_format: Literal["url", "b64_json"] | None = "url"
@@ -116,15 +100,11 @@ class ImageVariationRequest(NexosAPIRequest):
 
 
 class StorageUploadRequest(NexosAPIRequest):
-    _endpoint = "post:/v1/storage"
-
     file: str | bytes | list[bytes]
     purpose: Literal["assistants", "batch", "fine-tune", "vision", "user_data", "evals"]
 
 
 class StoragelistRequest(NexosAPIRequest):
-    _endpoint = "get:/v1/storage"
-
     after: str | None = None
     limit: conint(ge=1, le=10000) | None = 10000
     order: Literal["asc", "desc"] | None = "desc"
@@ -132,36 +112,61 @@ class StoragelistRequest(NexosAPIRequest):
 
 
 class StorageDownloadRequest(NexosAPIRequest):
-    _endpoint = "get:/v1/storage/{file_id}/content"
+    """
+    Request to download a file from storage.
+    """
 
 
 class StorageGetRequest(NexosAPIRequest):
-    _endpoint = "get:/v1/storage/{file_id}"
+    """
+    Request to get metadata of a file from storage.
+    """
 
 
 class StorageDeleteRequest(NexosAPIRequest):
-    _endpoint = "delete:/v1/storage/{file_id}"
+    """
+    Request to delete a file from storage.
+    """
 
 
 class TeamApiKeyCreateRequest(NexosAPIRequest):
-    _endpoint = "post:/v1/teams/{team_id}/api_keys"
+    """
+    Request to create a new API key for a team.
+    """
 
     name: str
 
 
 class TeamApiKeyUpdateRequest(NexosAPIRequest):
-    _endpoint = "patch:/v1/teams/{team_id}/api_keys/{api_key_id}"
+    """
+    Request to update an existing API key for a team.
+    """
 
     name: str
 
 
 class TeamApiKeyDeleteRequest(NexosAPIRequest):
-    _endpoint = "delete:/v1/teams/{team_id}/api_keys/{api_key_id}"
+    """
+    Request to delete an API key for a team.
+    """
 
 
 class TeamApiKeyRegenerateRequest(NexosAPIRequest):
-    _endpoint = "post:/v1/teams/{team_id}/api_keys/{api_key_id}/regenerate"
+    """
+    Request to regenerate an API key for a team.
+    This request does not require any additional parameters.
+    It simply triggers the regeneration of the API key.
+    """
 
 
 class ModelslistRequest(NexosAPIRequest):
-    _endpoint = "get:/v1/models"
+    """
+    Request to list available models.
+    """
+
+
+class MockRequestModel(NexosAPIRequest):
+    """For testing purposes."""
+
+    key: str
+    value: str

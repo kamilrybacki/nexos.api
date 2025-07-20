@@ -107,3 +107,11 @@ class TeamApiKeyUpdateResponse(NexosAPIResponse, TeamApiKey): ...
 
 
 class TeamApiKeyRegenerateResponse(NexosAPIResponse, TeamApiKey): ...
+
+
+class MockResponseModel(NexosAPIResponse):
+    """For testing purposes."""
+
+    @classmethod
+    def null(cls) -> NexosAPIResponse:
+        return cls()

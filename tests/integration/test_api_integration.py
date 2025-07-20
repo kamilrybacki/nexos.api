@@ -41,7 +41,7 @@ async def test_connection_to_test_api(
         )
 
         nexos_api: NexosAPIService = initialize_nexosai_api_service()
-        response = await nexos_api.get(test_endpoint.split("/")[-1])
+        response = await nexos_api.request("GET", test_endpoint.split("/")[-1])
         logging.info(f"[TEST] Response from mock API: {response.json()}")
 
         assert response.status_code == HTTPStatus.OK

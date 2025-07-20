@@ -52,7 +52,7 @@ class NexosAPIService:
             )
 
         self.__client = __spawn_client
-        self._request = retry_strategy(self._request)
+        self.request = retry_strategy(self.request)
 
     def construct_headers(self, config: NexosAIAPIConfiguration) -> dict[str, str]:
         """
@@ -74,11 +74,13 @@ class NexosAPIService:
         """
         return None
 
-    async def _request(self, verb: str, url: str, override_base: bool = False) -> httpx.Response:  # noqa: FBT001, FBT002
+    async def request(self, verb: str, url: str, override_base: bool = False, **kwargs: Any) -> httpx.Response:  # noqa: FBT001, FBT002
         """
         Send an HTTP request using the configured client.
 
         :param verb: The HTTP method to use (e.g., 'GET', 'POST').
+        :param url: The URL to which the request is sent. If `override_base` is True, it will not prepend the base URL.
+        :param override_base: If True, the base URL will not be prepended to the provided URL.
         :return: The HTTP response.
         """
         full_url = url if override_base else f"{self.base_url}/{url.lstrip('/')}"
@@ -86,7 +88,9 @@ class NexosAPIService:
             message = "[HTTP] Client was not initialized."
             raise RuntimeError(message)
         async with await self.__client() as spawned_client:
-            response = await spawned_client.request(method=verb, url=full_url, follow_redirects=self.__follow_redirects)
+            response = await spawned_client.request(
+                method=verb, url=full_url, follow_redirects=self.__follow_redirects, **kwargs
+            )
             response.raise_for_status()
             return response
 
@@ -99,32 +103,3 @@ class NexosAPIService:
         else:
             message = "[HTTP] Client was not initialized."
             raise RuntimeError(message)
-
-    # Available HTTP methods
-
-    async def get(self, url: str, **kwargs: Any) -> httpx.Response:
-        """
-        Send a GET request to the specified URL.
-
-        :param url: The URL to send the GET request to.
-        :return: The HTTP response.
-        """
-        return await self._request("GET", url, **kwargs)
-
-    async def post(self, url: str, **kwargs: Any) -> httpx.Response:
-        """
-        Send a POST request to the specified URL.
-
-        :param url: The URL to send the POST request to.
-        :return: The HTTP response.
-        """
-        return await self._request("POST", url, **kwargs)
-
-    async def head(self, url: str, **kwargs: Any) -> httpx.Response:
-        """
-        Send a HEAD request to the specified URL.
-
-        :param url: The URL to send the HEAD request to.
-        :return: The HTTP response.
-        """
-        return await self._request("HEAD", url, **kwargs)

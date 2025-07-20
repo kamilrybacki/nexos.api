@@ -6,7 +6,7 @@ from nexosapi.services.http import NexosAPIService
 
 
 @pytest.mark.asyncio
-@patch.object(NexosAPIService, "_request", new_callable=AsyncMock)
+@patch.object(NexosAPIService, "request", new_callable=AsyncMock)
 async def test_get_request(mock_request, initialize_nexosai_api_service, service_environment) -> None:
     with service_environment(
         {
@@ -15,13 +15,13 @@ async def test_get_request(mock_request, initialize_nexosai_api_service, service
         }
     ):
         mock_request.return_value = "mock_response"
-        response = await initialize_nexosai_api_service().get("test-url")
+        response = await initialize_nexosai_api_service().request("GET", "test-url")
         mock_request.assert_called_once_with("GET", "test-url")
         assert response == "mock_response"
 
 
 @pytest.mark.asyncio
-@patch.object(NexosAPIService, "_request", new_callable=AsyncMock)
+@patch.object(NexosAPIService, "request", new_callable=AsyncMock)
 async def test_post_request(mock_request, initialize_nexosai_api_service, service_environment) -> None:
     with service_environment(
         {
@@ -30,13 +30,13 @@ async def test_post_request(mock_request, initialize_nexosai_api_service, servic
         }
     ):
         mock_request.return_value = "mock_response"
-        response = await initialize_nexosai_api_service().post("test-url", json={"key": "value"})
+        response = await initialize_nexosai_api_service().request("POST", "test-url", json={"key": "value"})
         mock_request.assert_called_once_with("POST", "test-url", json={"key": "value"})
         assert response == "mock_response"
 
 
 @pytest.mark.asyncio
-@patch.object(NexosAPIService, "_request", new_callable=AsyncMock)
+@patch.object(NexosAPIService, "request", new_callable=AsyncMock)
 async def test_head_request(mock_request, initialize_nexosai_api_service, service_environment) -> None:
     with service_environment(
         {
@@ -45,13 +45,13 @@ async def test_head_request(mock_request, initialize_nexosai_api_service, servic
         }
     ):
         mock_request.return_value = "mock_response"
-        response = await initialize_nexosai_api_service().head("test-url")
+        response = await initialize_nexosai_api_service().request("HEAD", "test-url")
         mock_request.assert_called_once_with("HEAD", "test-url")
         assert response == "mock_response"
 
 
 @pytest.mark.asyncio
-@patch.object(NexosAPIService, "_request", new_callable=AsyncMock)
+@patch.object(NexosAPIService, "request", new_callable=AsyncMock)
 async def test_request_with_override_base(mock_request, initialize_nexosai_api_service, service_environment) -> None:
     with service_environment(
         {
@@ -60,6 +60,6 @@ async def test_request_with_override_base(mock_request, initialize_nexosai_api_s
         }
     ):
         mock_request.return_value = "mock_response"
-        response = await initialize_nexosai_api_service().get("test-url", override_base=True)
+        response = await initialize_nexosai_api_service().request("GET", "test-url", override_base=True)
         mock_request.assert_called_once_with("GET", "test-url", override_base=True)
         assert response == "mock_response"
