@@ -1,19 +1,23 @@
 version: '3'
 
 vars:
-  FULL_PACKAGER_COMMAND: ".venv/bin/python -m poetry"
+  PYTHON_BIN: ".venv/bin/python"
+  FULL_PACKAGER_COMMAND: "{{.PYTHON_BIN}} -m poetry"
   PYTHON_VERSION: "3.13"
+  TEST_BASE_COMMAND: "{{.FULL_PACKAGER_COMMAND}} run pytest --config-file pyproject.toml -svv"
 
 tasks:
   install-dev:
     desc: Install development dependencies
     cmds:
+      - "{{.PYTHON_BIN}} utils/types_compiler/compile.py"
       - "{{.FULL_PACKAGER_COMMAND}} lock"
       - "{{.FULL_PACKAGER_COMMAND}} install --all-groups"
 
   install-prod:
     desc: Install production dependencies
     cmds:
+      - "{{.PYTHON_BIN}} utils/types_compiler/compile.py"
       - "{{.FULL_PACKAGER_COMMAND}} install --no-dev"
 
   enable-pre-commit:
@@ -66,21 +70,21 @@ tasks:
     env:
       TESTCONTAINERS_HOST_OVERRIDE: "127.0.0.1"
     cmds:
-      - "{{.FULL_PACKAGER_COMMAND}} run pytest --config-file pyproject.toml -svv"
+      - "{{.TEST_BASE_COMMAND}}"
 
   test-chosen:
     desc: Run tests marked as "chosen"
     env:
       TESTCONTAINERS_HOST_OVERRIDE: "127.0.0.1"
     cmds:
-      - "{{.FULL_PACKAGER_COMMAND}} run pytest --config-file pyproject.toml -svv -m 'chosen'"
+      - "{{.TEST_BASE_COMMAND}} -m 'chosen'"
 
   test-offline:
     desc: Run tests that can be run offline
     env:
       TESTCONTAINERS_HOST_OVERRIDE: "127.0.0.1"
     cmds:
-      - "{{.FULL_PACKAGER_COMMAND}} run pytest --config-file pyproject.toml -svv -m 'offline'"
+      - "{{.TEST_BASE_COMMAND}} -m 'offline'"
 
   serve-mock-api:
     desc: Serve the mock API

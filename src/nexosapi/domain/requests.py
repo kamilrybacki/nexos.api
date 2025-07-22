@@ -104,7 +104,7 @@ class StorageUploadRequest(NexosAPIRequest):
     purpose: Literal["assistants", "batch", "fine-tune", "vision", "user_data", "evals"]
 
 
-class StoragelistRequest(NexosAPIRequest):
+class StorageListRequest(NexosAPIRequest):
     after: str | None = None
     limit: conint(ge=1, le=10000) | None = 10000
     order: Literal["asc", "desc"] | None = "desc"
@@ -159,14 +159,7 @@ class TeamApiKeyRegenerateRequest(NexosAPIRequest):
     """
 
 
-class ModelslistRequest(NexosAPIRequest):
+class ModelsListRequest(NexosAPIRequest):
     """
     Request to list available models.
     """
-
-
-class MockRequestModel(NexosAPIRequest):
-    """For testing purposes."""
-
-    key: str
-    value: str

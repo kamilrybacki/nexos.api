@@ -5,14 +5,13 @@ from httpx import Response
 from mypy.metastore import random_string
 
 from nexosapi.common.exceptions import InvalidControllerEndpointError
-from nexosapi.domain.requests import MockRequestModel
-from nexosapi.domain.responses import MockResponseModel
-from nexosapi.endpoints.controller import NexosAIEndpointController
 from nexosapi.services.http import NexosAPIService
-
-
-class MockEndpointController[MockRequestModel, MockResponseModel](NexosAIEndpointController):
-    endpoint = "post:/mock_path"
+from tests.mocks import (
+    EndpointControllerWithCustomOperations,
+    MockEndpointController,
+    MockRequestModel,
+    MockResponseModel,
+)
 
 
 def test_endpoint_with_invalid_format_raises_value_error():
@@ -52,30 +51,11 @@ async def test_send_with_invalid_request_returns_null_response():
     assert isinstance(response, MockResponseModel)
 
 
-class EndpointControllerWithCustomOperation(MockEndpointController):
-    class Operations:
-        @staticmethod
-        def with_uppercase_value(request: MockRequestModel) -> MockRequestModel:
-            request.value = request.value.upper()
-            return request
-
-        @staticmethod
-        def with_switched_field_values(request: MockRequestModel) -> MockRequestModel:
-            key = request.key
-            value = request.value
-            return MockRequestModel(key=value, value=key)
-
-        @staticmethod
-        def with_hardcoded_value(request: MockRequestModel, value: str) -> MockRequestModel:
-            request.value = value
-            return request
-
-
 def test_controller_with_custom_operations() -> None:
     random_key = random_string()
     random_value = random_string()
 
-    controller = EndpointControllerWithCustomOperation()
+    controller = EndpointControllerWithCustomOperations()
     assert controller.endpoint == "post:/mock_path"
 
     mock_response_data = {"key": random_key, "value": random_value}
@@ -102,8 +82,9 @@ def test_controller_with_custom_operations() -> None:
     assert controller.request._pending.value == hardcoded_value  # noqa: SLF001
 
 
+@pytest.mark.chosen
 def test_chaining_operations_in_controller() -> None:
-    controller = EndpointControllerWithCustomOperation()
+    controller = EndpointControllerWithCustomOperations()
     random_key = random_string()
     random_value = random_string()
     hardcoded_value = MockResponseModel.__doc__.lower()

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import abc
 import dataclasses
 import logging
@@ -5,7 +7,7 @@ import re
 import typing
 from typing import Any, ClassVar, TypeVar
 
-import httpx
+import httpx  # noqa: TC002
 import pydantic
 from dependency_injector.wiring import Provide, inject
 from mypy.metastore import random_string
@@ -23,95 +25,6 @@ from nexosapi.services.http import NexosAPIService
 
 EndpointRequestType = TypeVar("EndpointRequestType", bound=NexosAPIRequest)
 EndpointResponseType = TypeVar("EndpointResponseType", bound=NexosAPIResponse)
-
-
-@dataclasses.dataclass
-class RequestManager:
-    _controller: "NexosAIEndpointController" = dataclasses.field()
-    _pending: EndpointRequestType | None = dataclasses.field(init=False, default=None)
-    __salt: str = dataclasses.field(init=False, default=random_string())
-
-    @staticmethod
-    def _get_verb_from_endpoint(endpoint: str) -> str:
-        """
-        Extract the HTTP verb from the endpoint string.
-
-        :param endpoint: The endpoint string in the format "verb: /path".
-        :return: The HTTP verb (e.g., "GET", "POST").
-        """
-        return endpoint.split(":", 1)[0].strip().upper()
-
-    @staticmethod
-    def _get_path_from_endpoint(endpoint: str) -> str:
-        """
-        Extract the path from the endpoint string.
-
-        :param endpoint: The endpoint string in the format "verb: /path".
-        :return: The path (e.g., "/path").
-        """
-        return endpoint.split(":", 1)[1].strip()
-
-    def prepare(self, data: dict[str, Any]) -> "RequestManager":
-        """
-        Prepare the request data by initializing the pending request.
-
-        :param data: The data to be included in the request.
-        """
-        try:
-            if not self._pending:
-                self._pending = self._controller._request_model(**data)  # noqa: SLF001
-        except pydantic.ValidationError as incorrect_data:
-            logging.info(f"[API] Validation error in {self._controller.__class__.__name__}: {incorrect_data}")
-            self._pending = None
-        else:
-            return self
-
-    @inject
-    async def send(
-        self, endpoint: str, api_service: NexosAPIService = Provide["NexosAPIService"]
-    ) -> EndpointRequestType | NullableBaseModel:
-        """
-        Call the endpoint with the provided request data.
-
-        :param endpoint: The endpoint string in the format "verb:/path".
-        :param api_service: The HTTP service used to make the request.
-        :return: The response data from the endpoint.
-        """
-        if not self._pending:
-            logging.info(f"[API] No pending request in {self._controller.__class__.__name__}")
-            return self._controller._response_model.null()  # noqa: SLF001
-
-        response: httpx.Response = await api_service.request(
-            verb=self._get_verb_from_endpoint(endpoint),
-            url=self._get_path_from_endpoint(endpoint),
-            json=self._pending.model_dump(),
-        )
-        if response.is_error:
-            self._controller.on_error(response)
-            return self._controller._response_model.null()  # noqa: SLF001
-        structured_response = self._controller._response_model(**response.json())  # noqa: SLF001
-        structured_response._response = response  # noqa: SLF001
-        return self._controller.on_response(structured_response)
-
-    def __getattr__(self, target: str) -> Any:
-        """
-        Redirect any getattr calls to the operations defined
-        in the controller class, EXCEPT for the `prepare` and `send` methods.
-        """
-        if target in ("prepare", "send"):
-            if retrieved_method := getattr(self._controller, f"_{self.__salt}_{target}"):
-                return retrieved_method
-            raise AttributeError(f"[API] Method {target} not found.")
-
-        if operation := getattr(self._controller.operations, target):
-
-            def _wrapped_operation(*args: Any, **kwargs: Any) -> "RequestManager":
-                operation_result = operation(self._pending, *args, **kwargs)
-                self._pending = operation_result
-                return self
-
-            return _wrapped_operation
-        raise AttributeError(f"[API] {self._controller.__class__.__name__} has no operation '{target}' defined.")
 
 
 @dataclasses.dataclass
@@ -134,7 +47,108 @@ class NexosAIEndpointController(typing.Generic[EndpointRequestType, EndpointResp
         """
 
     operations: Operations = dataclasses.field(init=False)
-    request: RequestManager = dataclasses.field(init=False)
+
+    @dataclasses.dataclass
+    class _RequestManager:
+        """
+        RequestManager is responsible for preparing and sending requests to the API endpoints.
+        It handles the request data preparation and manages the lifecycle of the request.
+        It also provides a way to perform operations on the request data before sending it.
+        This class is initialized with a controller instance and uses dependency injection
+        to access the NexosAPIService for making HTTP requests.
+
+        IT HAS TO BE NESTED INSIDE THE CONTROLLER CLASS SINCE THE COMPILED TYPE STUBS
+        HAVE TO STATICALLY OVERWRITE THE METHODS OF THE REQUEST MANAGER FOR EACH CONTROLLER IMPLEMENTATION.
+        """
+
+        _controller: NexosAIEndpointController = dataclasses.field()
+        _pending: EndpointRequestType | None = dataclasses.field(init=False, default=None)
+        __salt: str = dataclasses.field(init=False, default=random_string())
+
+        @staticmethod
+        def _get_verb_from_endpoint(endpoint: str) -> str:
+            """
+            Extract the HTTP verb from the endpoint string.
+
+            :param endpoint: The endpoint string in the format "verb: /path".
+            :return: The HTTP verb (e.g., "GET", "POST").
+            """
+            return endpoint.split(":", 1)[0].strip().upper()
+
+        @staticmethod
+        def _get_path_from_endpoint(endpoint: str) -> str:
+            """
+            Extract the path from the endpoint string.
+
+            :param endpoint: The endpoint string in the format "verb: /path".
+            :return: The path (e.g., "/path").
+            """
+            return endpoint.split(":", 1)[1].strip()
+
+        def prepare(self, data: dict[str, Any]) -> NexosAIEndpointController._RequestManager:
+            """
+            Prepare the request data by initializing the pending request.
+
+            :param data: The data to be included in the request.
+            """
+            try:
+                if not self._pending:
+                    self._pending = self._controller._request_model(**data)  # noqa: SLF001
+            except pydantic.ValidationError as incorrect_data:
+                logging.info(f"[API] Validation error in {self._controller.__class__.__name__}: {incorrect_data}")
+                self._pending = None
+            else:
+                return self
+
+        @inject
+        async def send(
+            self, endpoint: str, api_service: NexosAPIService = Provide["NexosAPIService"]
+        ) -> EndpointRequestType | NullableBaseModel:
+            """
+            Call the endpoint with the provided request data.
+
+            :param endpoint: The endpoint string in the format "verb:/path".
+            :param api_service: The HTTP service used to make the request.
+            :return: The response data from the endpoint.
+            """
+            if not self._pending:
+                logging.info(f"[API] No pending request in {self._controller.__class__.__name__}")
+                return self._controller._response_model.null()  # noqa: SLF001
+
+            response: httpx.Response = await api_service.request(
+                verb=self._get_verb_from_endpoint(endpoint),
+                url=self._get_path_from_endpoint(endpoint),
+                json=self._pending.model_dump(),
+            )
+            if response.is_error:
+                self._controller.on_error(response)
+                return self._controller._response_model.null()  # noqa: SLF001
+            structured_response = self._controller._response_model(**response.json())  # noqa: SLF001
+            structured_response._response = response  # noqa: SLF001
+            return self._controller.on_response(structured_response)
+
+        def __getattr__(self, target: str) -> Any:
+            """
+            Redirect any getattr calls to the operations defined
+            in the controller class, EXCEPT for the `prepare` and `send` methods.
+            """
+            if target in ("prepare", "send"):
+                if retrieved_method := getattr(self._controller, f"_{self.__salt}_{target}"):
+                    return retrieved_method
+                raise AttributeError(f"[API] Method {target} not found.")
+
+            if operation := getattr(self._controller.operations, target):
+
+                def _wrapped_operation(*args: Any, **kwargs: Any) -> Any:
+                    operation_result = operation(self._pending, *args, **kwargs)
+                    self._pending = operation_result
+                    return self
+
+                return _wrapped_operation
+            raise AttributeError(f"[API] {self._controller.__class__.__name__} has no operation '{target}' defined.")
+
+    REQUEST_MANAGER_CLASS: type = dataclasses.field(init=False, default=_RequestManager)
+    request: REQUEST_MANAGER_CLASS = dataclasses.field(init=False)
 
     @classmethod
     def _validate_endpoint(cls, endpoint: str) -> None:
@@ -172,7 +186,7 @@ class NexosAIEndpointController(typing.Generic[EndpointRequestType, EndpointResp
         Post-initialization method to validate the endpoint format.
         Raises ValueError if the endpoint does not match the expected format.
         """
-        self.request = RequestManager(self)
+        self.request = self.REQUEST_MANAGER_CLASS(self)
         self.operations = self.Operations()
         nested_endpoint_base_class = self.__class__
 
