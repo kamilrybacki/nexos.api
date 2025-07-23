@@ -4,7 +4,6 @@ import abc
 import dataclasses
 import logging
 import re
-import typing
 from typing import Any, ClassVar, TypeVar
 
 import httpx  # noqa: TC002
@@ -28,7 +27,7 @@ EndpointResponseType = TypeVar("EndpointResponseType", bound=NexosAPIResponse)
 
 
 @dataclasses.dataclass
-class NexosAIEndpointController(typing.Generic[EndpointRequestType, EndpointResponseType]):  # noqa: UP046
+class NexosAIEndpointController[EndpointRequestType, EndpointResponseType]:
     """
     Abstract base class for NexosAI endpoint controllers.
     This class defines the structure for endpoint controllers in the Nexos AI API.

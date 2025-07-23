@@ -1,6 +1,5 @@
-from collections.abc import Generator
-
 from _typeshed import Incomplete as Incomplete
+from collections.abc import Generator
 
 pytest_plugins: Incomplete
 ASSETS_DIR: Incomplete

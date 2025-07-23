@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from types import NoneType
-from typing import Any, get_args, get_origin
+from typing import Any, Self, get_args, get_origin
 
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
@@ -82,7 +82,7 @@ class NullableBaseModel(BaseModel):
         }
 
     @classmethod
-    def null(cls) -> NullableBaseModel:
+    def null(cls: type[Self]) -> Self:
         """
         Returns a null instance of the model with all fields set to None.
         This is useful for cases where no data is expected.

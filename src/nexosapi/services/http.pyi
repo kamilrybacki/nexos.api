@@ -1,9 +1,7 @@
 import dataclasses
-from typing import Any
-
 import httpx
-
 from nexosapi.config.settings.services import NexosAIAPIConfiguration as NexosAIAPIConfiguration
+from typing import Any
 
 @dataclasses.dataclass
 class NexosAPIService:

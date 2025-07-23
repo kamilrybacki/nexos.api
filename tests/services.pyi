@@ -1,9 +1,6 @@
-from collections.abc import Callable as Callable
-from collections.abc import Generator
-
 import pytest
 from _typeshed import Incomplete as Incomplete
-
+from collections.abc import Callable as Callable, Generator
 from nexosapi.services.http import NexosAPIService as NexosAPIService
 
 MOCK_API_DIR: Incomplete

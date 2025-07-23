@@ -1,18 +1,11 @@
-from typing import Literal
-
 from nexosapi.domain.base import NullableBaseModel as NullableBaseModel
 from nexosapi.domain.metadata import (
     Annotation as Annotation,
-)
-from nexosapi.domain.metadata import (
     FunctionCall as FunctionCall,
-)
-from nexosapi.domain.metadata import (
     LogProbsInfo as LogProbsInfo,
-)
-from nexosapi.domain.metadata import (
     ToolCall as ToolCall,
 )
+from typing import Literal
 
 class Audio(NullableBaseModel):
     id: str

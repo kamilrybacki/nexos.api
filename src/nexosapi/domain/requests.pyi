@@ -1,8 +1,6 @@
-from typing import Any, Literal
-
-from pydantic import BaseModel
-
 from nexosapi.domain.data import ChatMessage as ChatMessage
+from pydantic import BaseModel
+from typing import Any, Literal
 
 class NexosAPIRequest(BaseModel): ...
 

@@ -1,5 +1,4 @@
 import typing
-
 from nexosapi.domain.base import NullableBaseModel as NullableBaseModel
 
 class Model(NullableBaseModel):

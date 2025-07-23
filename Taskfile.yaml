@@ -18,7 +18,7 @@ tasks:
     desc: Install production dependencies
     cmds:
       - "{{.PYTHON_BIN}} utils/types_compiler/compile.py"
-      - "{{.FULL_PACKAGER_COMMAND}} install --no-dev"
+      - "{{.FULL_PACKAGER_COMMAND}} install"
 
   enable-pre-commit:
     desc: Enable pre-commit hooks

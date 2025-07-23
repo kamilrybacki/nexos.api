@@ -1,32 +1,17 @@
-from typing import Literal
-
 import pydantic
 from _typeshed import Incomplete as Incomplete
-
 from nexosapi.domain.base import NullableBaseModel as NullableBaseModel
 from nexosapi.domain.data import (
     ChatChoice as ChatChoice,
-)
-from nexosapi.domain.data import (
     Embedding as Embedding,
-)
-from nexosapi.domain.data import (
     Image as Image,
-)
-from nexosapi.domain.data import (
     StorageFile as StorageFile,
-)
-from nexosapi.domain.data import (
     TeamApiKey as TeamApiKey,
-)
-from nexosapi.domain.data import (
     TranscriptionSegment as TranscriptionSegment,
-)
-from nexosapi.domain.data import (
     TranscriptionWord as TranscriptionWord,
 )
-from nexosapi.domain.metadata import Model as Model
-from nexosapi.domain.metadata import UsageInfo as UsageInfo
+from nexosapi.domain.metadata import Model as Model, UsageInfo as UsageInfo
+from typing import Literal
 
 class NexosAPIResponse(NullableBaseModel):
     class Config:

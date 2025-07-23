@@ -1,8 +1,7 @@
-import typing
-from collections.abc import Coroutine
-
 import fastapi
+import typing
 from _typeshed import Incomplete as Incomplete
+from collections.abc import Coroutine
 from fastapi.responses import HTMLResponse as HTMLResponse
 
 mock_nexos_router: Incomplete
