@@ -150,7 +150,7 @@ class RequestMakerRewriter(ast.NodeTransformer):
             # Construct new RequestMaker class
             self.add_original_request_manager_body(
                 new_request_maker_body,
-                data_models,
+                data_models,  # type: ignore
             )
             class_name = node.name
             request_maker_class = ast.ClassDef(
