@@ -1,5 +1,5 @@
 import pydantic
-from _typeshed import Incomplete as Incomplete
+from _typeshed import Incomplete
 from nexosapi.domain.base import NullableBaseModel as NullableBaseModel
 from nexosapi.domain.data import (
     ChatChoice as ChatChoice,

@@ -5,7 +5,7 @@ import pytest
 import requests
 
 from nexosapi.config.settings.defaults import NEXOSAI_AUTH_HEADER_NAME, NEXOSAI_AUTH_HEADER_PREFIX
-from nexosapi.services.http import NexosAPIService
+from nexosapi.services.http import NexosAIAPIService
 from tests.services import MOCK_API_DATA, MOCK_API_DATA_JSON_PATH, MOCK_API_KEY
 
 
@@ -40,7 +40,7 @@ async def test_connection_to_test_api(
             "Expected to get a successful response from the mock API with the correct API key"
         )
 
-        nexos_api: NexosAPIService = initialize_nexosai_api_service()
+        nexos_api: NexosAIAPIService = initialize_nexosai_api_service()
         response = await nexos_api.request("GET", test_endpoint.split("/")[-1])
         logging.info(f"[TEST] Response from mock API: {response.json()}")
 

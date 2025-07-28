@@ -1,8 +1,16 @@
+import contextlib
 from collections.abc import Generator
+from nexosapi.config.settings.defaults import NEXOSAI_CONFIGURATION_PREFIX as NEXOSAI_CONFIGURATION_PREFIX
 
 class NexosAIAPIConfiguration:
+    """
+    Configuration class for the NEXOSAI API service.
+    This class holds the necessary configuration values for the NEXOSAI API service.
+    """
     @classmethod
-    def use(cls) -> Generator[NexosAIAPIConfiguration]: ...
+    @contextlib.contextmanager
+    def use(cls) -> Generator["NexosAIAPIConfiguration"]:
+        """Context manager to use the configuration."""
     base_url: str
     api_key: str
     version: str

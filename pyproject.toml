@@ -75,7 +75,10 @@ ignore = [
     "ASYNC210",
     "TC001",
     "SIM102",
-    "PLR0911"
+    "PLR0911",
+    "SLF001",
+    "FBT001",
+    "FBT002",
 ]
 exclude = [
     "*.pyi",  # ignore type stubs

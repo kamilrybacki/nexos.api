@@ -1,8 +1,13 @@
 from nexosapi.domain.data import ChatMessage as ChatMessage
-from pydantic import BaseModel
+from pydantic import BaseModel, conint as conint, constr as constr
 from typing import Any, Literal
 
-class NexosAPIRequest(BaseModel): ...
+class NexosAPIRequest(BaseModel):
+    """
+    Base class for all API requests to the NEXOS API.
+    This class serves as a foundation for defining specific API request models.
+    It can be extended to create more specific request models for different API endpoints.
+    """
 
 class ChatCompletionsRequest(NexosAPIRequest):
     model: str
@@ -12,10 +17,10 @@ class ChatCompletionsRequest(NexosAPIRequest):
     frequency_penalty: float | None
     logit_bias: dict[str, float] | None
     logprobs: bool | None
-    top_logprobs: None
+    top_logprobs: None | None
     max_tokens: int | None
     max_completion_tokens: int | None
-    n: None
+    n: None | None
     modalities: list[Literal["text", "audio"]] | None
     presence_penalty: float | None
     response_format: dict[str, Any] | None
@@ -88,20 +93,52 @@ class StorageUploadRequest(NexosAPIRequest):
 
 class StorageListRequest(NexosAPIRequest):
     after: str | None
-    limit: None
+    limit: None | None
     order: Literal["asc", "desc"] | None
     purpose: Literal["assistants", "batch", "fine-tune", "vision", "user_data", "evals"] | None
 
-class StorageDownloadRequest(NexosAPIRequest): ...
-class StorageGetRequest(NexosAPIRequest): ...
-class StorageDeleteRequest(NexosAPIRequest): ...
+class StorageDownloadRequest(NexosAPIRequest):
+    """
+    Request to download a file from storage.
+    """
+
+class StorageGetRequest(NexosAPIRequest):
+    """
+    Request to get metadata of a file from storage.
+    """
+
+class StorageDeleteRequest(NexosAPIRequest):
+    """
+    Request to delete a file from storage.
+    """
 
 class TeamApiKeyCreateRequest(NexosAPIRequest):
+    """
+    Request to create a new API key for a team.
+    """
+
     name: str
 
 class TeamApiKeyUpdateRequest(NexosAPIRequest):
+    """
+    Request to update an existing API key for a team.
+    """
+
     name: str
 
-class TeamApiKeyDeleteRequest(NexosAPIRequest): ...
-class TeamApiKeyRegenerateRequest(NexosAPIRequest): ...
-class ModelsListRequest(NexosAPIRequest): ...
+class TeamApiKeyDeleteRequest(NexosAPIRequest):
+    """
+    Request to delete an API key for a team.
+    """
+
+class TeamApiKeyRegenerateRequest(NexosAPIRequest):
+    """
+    Request to regenerate an API key for a team.
+    This request does not require any additional parameters.
+    It simply triggers the regeneration of the API key.
+    """
+
+class ModelsListRequest(NexosAPIRequest):
+    """
+    Request to list available models.
+    """

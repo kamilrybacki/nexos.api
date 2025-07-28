@@ -1,25 +1,25 @@
 import asyncio
 import dataclasses
-from collections.abc import Callable, Coroutine
+from collections.abc import Callable
 from typing import Any
 from urllib.parse import urljoin
 
 import httpx
 import tenacity
 
+from nexosapi.config.settings.defaults import NEXOSAI_AUTH_HEADER_NAME, NEXOSAI_AUTH_HEADER_PREFIX
 from nexosapi.config.settings.services import NexosAIAPIConfiguration
-from src.nexosapi.config.settings.defaults import NEXOSAI_AUTH_HEADER_NAME, NEXOSAI_AUTH_HEADER_PREFIX
 
 
 @dataclasses.dataclass
-class NexosAPIService:
+class NexosAIAPIService:
     """
     Abstract class for asynchronous services.
     """
 
     base_url: str = dataclasses.field(init=False)
     _loop: asyncio.AbstractEventLoop | None = dataclasses.field(default=None, init=False)
-    __client: Callable[[], Coroutine[None, None, httpx.AsyncClient]] | None = dataclasses.field(init=False, repr=False)
+    __client: Callable[[], httpx.AsyncClient] | None = dataclasses.field(init=False, repr=False)
     __follow_redirects: bool = dataclasses.field(init=False, default=True)
 
     def __post_init__(self) -> None:
@@ -40,7 +40,7 @@ class NexosAPIService:
         )
         self.base_url = urljoin(config.base_url, config.version)
 
-        async def __spawn_client() -> httpx.AsyncClient:
+        def __spawn_client() -> httpx.AsyncClient:
             """
             Create an instance of httpx.AsyncClient with the provided configuration.
             """
@@ -51,8 +51,8 @@ class NexosAPIService:
                 auth=self.construct_auth(config),
             )
 
-        self.__client = __spawn_client
-        self.request = retry_strategy(self.request)
+        self.__client = __spawn_client  # type: ignore[assignment]
+        self.request = retry_strategy(self.request)  # type: ignore
 
     def construct_headers(self, config: NexosAIAPIConfiguration) -> dict[str, str]:
         """
@@ -74,7 +74,7 @@ class NexosAPIService:
         """
         return None
 
-    async def request(self, verb: str, url: str, override_base: bool = False, **kwargs: Any) -> httpx.Response:  # noqa: FBT001, FBT002
+    async def request(self, verb: str, url: str, override_base: bool = False, **kwargs: Any) -> httpx.Response:
         """
         Send an HTTP request using the configured client.
 
@@ -87,7 +87,7 @@ class NexosAPIService:
         if not self.__client:
             message = "[HTTP] Client was not initialized."
             raise RuntimeError(message)
-        async with await self.__client() as spawned_client:
+        async with self.__client() as spawned_client:
             response = await spawned_client.request(
                 method=verb, url=full_url, follow_redirects=self.__follow_redirects, **kwargs
             )

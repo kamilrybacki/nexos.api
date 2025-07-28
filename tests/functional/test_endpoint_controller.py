@@ -5,13 +5,17 @@ from httpx import Response
 from mypy.metastore import random_string
 
 from nexosapi.common.exceptions import InvalidControllerEndpointError
-from nexosapi.services.http import NexosAPIService
+from nexosapi.config.setup import wire_skd_dependencies
+from nexosapi.services.http import NexosAIAPIService
 from tests.mocks import (
+    MOCK_ENDPOINT_PATH,
     EndpointControllerWithCustomOperations,
+    MockAIAPIService,
     MockEndpointController,
     MockRequestModel,
     MockResponseModel,
 )
+from tests.services import MOCK_API_KEY, mock_api_injected_into_services_wiring
 
 
 def test_endpoint_with_invalid_format_raises_value_error():
@@ -25,30 +29,33 @@ def test_endpoint_with_valid_format_initializes_correctly():
     class ValidEndpointController(MockEndpointController): ...
 
     controller = ValidEndpointController()
-    assert controller.endpoint == "post:/mock_path"
+    assert controller.endpoint == MOCK_ENDPOINT_PATH
 
 
 @pytest.mark.asyncio
 async def test_send_with_valid_request_returns_successful_response():
-    mock_service = AsyncMock(spec=NexosAPIService)
+    mock_service = AsyncMock(spec=NexosAIAPIService)
     mock_service.request.return_value = Response(status_code=200, json={"key": "value"})
 
-    controller = MockEndpointController()
-    controller.request.prepare({"key": "value"})
-    response = await controller.request.send(controller.endpoint, api_service=mock_service)
+    with mock_api_injected_into_services_wiring(mock_service):
+        controller = MockEndpointController()
+        controller.request.prepare({"key": "value"})
+        response = await controller.request.send()
 
-    assert isinstance(response, MockResponseModel)
+        assert isinstance(response, MockResponseModel)
 
 
 @pytest.mark.asyncio
 async def test_send_with_invalid_request_returns_null_response():
-    mock_service = AsyncMock(spec=NexosAPIService)
+    mock_service = AsyncMock(spec=NexosAIAPIService)
     mock_service.request.return_value = Response(status_code=500)
 
-    controller = MockEndpointController()
-    response = await controller.request.send(controller.endpoint, api_service=mock_service)
+    with mock_api_injected_into_services_wiring(mock_service):
+        wire_skd_dependencies()
+        controller = MockEndpointController()
+        response = await controller.request.send()
 
-    assert isinstance(response, MockResponseModel)
+        assert isinstance(response, MockResponseModel)
 
 
 def test_controller_with_custom_operations() -> None:
@@ -56,33 +63,32 @@ def test_controller_with_custom_operations() -> None:
     random_value = random_string()
 
     controller = EndpointControllerWithCustomOperations()
-    assert controller.endpoint == "post:/mock_path"
+    assert controller.endpoint == MOCK_ENDPOINT_PATH
 
     mock_response_data = {"key": random_key, "value": random_value}
     controller.request.prepare(mock_response_data)
 
-    assert controller.request._pending == MockRequestModel(**mock_response_data)  # noqa: SLF001
+    assert controller.request.pending == MockRequestModel(**mock_response_data)
 
     controller.request.with_uppercase_value()
-    assert controller.request._pending.value == mock_response_data["value"].upper()  # noqa: SLF001
+    assert controller.request.pending.value == mock_response_data["value"].upper()
 
-    latest_request_data = controller.request._pending.model_dump()  # noqa: SLF001
+    latest_request_data = controller.request.pending.model_dump()
     controller.request.with_switched_field_values()
-    assert controller.request._pending == MockRequestModel(  # noqa: SLF001
+    assert controller.request.pending == MockRequestModel(
         key=latest_request_data["value"],
         value=latest_request_data["key"],
     )
 
     hardcoded_value = MockResponseModel.__doc__.lower()
     controller.request.with_hardcoded_value(hardcoded_value)
-    assert controller.request._pending.value == hardcoded_value  # noqa: SLF001
+    assert controller.request.pending.value == hardcoded_value
 
     hardcoded_value = MockResponseModel.__doc__.upper()
     controller.request.with_hardcoded_value(value=hardcoded_value)
-    assert controller.request._pending.value == hardcoded_value  # noqa: SLF001
+    assert controller.request.pending.value == hardcoded_value
 
 
-@pytest.mark.chosen
 def test_chaining_operations_in_controller() -> None:
     controller = EndpointControllerWithCustomOperations()
     random_key = random_string()
@@ -98,5 +104,35 @@ def test_chaining_operations_in_controller() -> None:
         .with_uppercase_value()
         .with_switched_field_values()
     )
-    assert controller.request._pending.key == hardcoded_value.upper()  # noqa: SLF001
-    assert controller.request._pending.value == initial_data["value"].upper()  # noqa: SLF001
+    assert controller.request.pending.key == hardcoded_value.upper()
+    assert controller.request.pending.value == initial_data["value"].upper()
+
+
+@pytest.mark.asyncio
+@pytest.mark.chosen
+async def test_using_controller_to_send_request(
+    service_environment,
+) -> None:
+    with service_environment(
+        {"NEXOSAI__BASE_URL": "http://localhost:5000", "NEXOSAI__VERSION": "v1", "NEXOSAI__API_KEY": MOCK_API_KEY}
+    ):
+        random_key = random_string()
+        random_value = random_string()
+        initial_data: dict[str, str] = {"key": random_key, "value": random_value}
+        with mock_api_injected_into_services_wiring(MockAIAPIService):
+            wire_skd_dependencies()
+            controller = EndpointControllerWithCustomOperations()
+
+            controller.request.prepare(initial_data)
+            controller.request.with_uppercase_value()
+
+            response: MockResponseModel = await controller.request.send()
+
+            # Check the contents of the response
+            assert isinstance(response, MockResponseModel)
+            assert response.key == initial_data["key"]
+            assert response.value == initial_data["value"].upper()
+
+            # Check the request state after sending
+            assert controller.request.pending is None
+            assert controller.request._last_response == response

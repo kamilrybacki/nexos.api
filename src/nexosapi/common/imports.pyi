@@ -1,3 +1,4 @@
+from nexosapi.common.exceptions import UndefinedEndpointModelError as UndefinedEndpointModelError
 from nexosapi.domain.requests import NexosAPIRequest as NexosAPIRequest
 from nexosapi.domain.responses import NexosAPIResponse as NexosAPIResponse
 

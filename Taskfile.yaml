@@ -10,15 +10,15 @@ tasks:
   install-dev:
     desc: Install development dependencies
     cmds:
-      - "{{.PYTHON_BIN}} utils/types_compiler/compile.py"
+      - "{{.PYTHON_BIN}} make/compiler/run.py"
       - "{{.FULL_PACKAGER_COMMAND}} lock"
       - "{{.FULL_PACKAGER_COMMAND}} install --all-groups"
 
   install-prod:
     desc: Install production dependencies
     cmds:
-      - "{{.PYTHON_BIN}} utils/types_compiler/compile.py"
-      - "{{.FULL_PACKAGER_COMMAND}} install"
+      - "{{.PYTHON_BIN}} make/compiler/run.py"
+      - "{{.FULL_PACKAGER_COMMAND}} install --no-dev --all-groups"
 
   enable-pre-commit:
     desc: Enable pre-commit hooks
@@ -89,5 +89,5 @@ tasks:
   serve-mock-api:
     desc: Serve the mock API
     cmds:
-      - "docker compose -f ./tests/assets/mock_api/docker-compose.yaml up --build --detach"
+      - "docker compose -f ./tests/assets/mock_api/docker-compose.yaml up --make --detach"
       - "docker compose -f ./tests/assets/mock_api/docker-compose.yaml watch --no-up"
