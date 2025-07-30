@@ -1,11 +1,11 @@
 from nexosapi.domain.base import NullableBaseModel
-from nexosapi.domain.responses import ChatCompletionsResponse, TranscriptionResponse
+from nexosapi.domain.responses import AudioTranscriptionResponse, ChatCompletionsResponse
 
 
 class SampleModel(NullableBaseModel):
     field1: str
-    field2: int | None
-    field3: dict[str, str] | None
+    field2: int | None = None
+    field3: dict[str, str] | None = None
     field4: list[int]
 
 
@@ -60,8 +60,8 @@ def test_nulling_domain_models() -> None:
         model: str | None
     """
 
-    transcription_model: TranscriptionResponse = TranscriptionResponse.null()
-    assert transcription_model.text == ""
+    transcription_model: AudioTranscriptionResponse = AudioTranscriptionResponse.null()
+    assert transcription_model.text is None
     assert transcription_model.language is None
     assert transcription_model.duration is None
     assert transcription_model.words == []

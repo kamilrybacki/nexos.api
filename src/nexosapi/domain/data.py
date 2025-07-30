@@ -13,19 +13,29 @@ class Audio(NullableBaseModel):
 
 class ChatMessage(NullableBaseModel):
     role: Literal["system", "user", "assistant", "tool", "function", "developer"] | None
-    refusal: str
-    tool_calls: list[ToolCall]
-    content: str
-    function_call: FunctionCall
-    audio: Audio
-    annotations: list[Annotation]
+    refusal: str | None = None
+    tool_calls: list[ToolCall] | None = None
+    content: str | None = None
+    function_call: FunctionCall | None = None
+    audio: Audio | None = None
+    annotations: list[Annotation] | None = None
+
+
+class PredictionType(NullableBaseModel):
+    type: str
+    content: str | None = None
+
+
+class AudioConfiguration(NullableBaseModel):
+    voice: Literal["alloy", "echo", "fable", "onyx", "nova", "shimmer"]
+    format: Literal["mp3", "opus", "flac", "wav", "pcm16"]
 
 
 class ChatChoice(NullableBaseModel):
     index: int
     message: ChatMessage
     finish_reason: str
-    logprobs: LogProbsInfo
+    logprobs: LogProbsInfo | None = None
 
 
 class TranscriptionWord(NullableBaseModel):
@@ -48,15 +58,15 @@ class TranscriptionSegment(NullableBaseModel):
 
 
 class StorageFile(NullableBaseModel):
-    size: int
-    created_at: int
-    expires_at: int | None
-    filename: str
-    id: str
+    size: int | None = None
+    created_at: int | None = None
+    expires_at: int | None = None
+    filename: str | None = None
+    id: str | None = None
     purpose: (
         Literal["assistants", "assistants_output", "batch", "batch_output", "fine-tune", "fine-tune-results", "vision"]
         | None
-    )
+    ) = None
 
 
 class Image(NullableBaseModel):
@@ -75,5 +85,5 @@ class TeamApiKey(NullableBaseModel):
     api_key: str
     id: str
     name: str
-    created_at: str | None
-    updated_at: str | None
+    created_at: str | None = None
+    updated_at: str | None = None

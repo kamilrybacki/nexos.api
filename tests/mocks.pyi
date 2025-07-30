@@ -1,11 +1,11 @@
 from __future__ import annotations
-
+import typing
 import httpx
 import typing
+from nexosapi.api.controller import NexosAIAPIEndpointController
 from nexosapi.config.settings.services import NexosAIAPIConfiguration as NexosAIAPIConfiguration
 from nexosapi.domain.requests import NexosAPIRequest
 from nexosapi.domain.responses import NexosAPIResponse
-from nexosapi.endpoints.controller import NexosAIEndpointController
 from nexosapi.services.http import NexosAIAPIService
 
 class MockRequestModel(NexosAPIRequest):
@@ -32,13 +32,15 @@ class MockAIAPIService(NexosAIAPIService):
 
 MOCK_ENDPOINT_PATH: str
 
-class MockEndpointController[MockRequestModel, MockResponseModel](NexosAIEndpointController):
+class MockEndpointController(NexosAIAPIEndpointController):
     endpoint: typing.ClassVar[str]
+    request_model = MockRequestModel
+    response_model = MockResponseModel
 
 class EndpointControllerWithCustomOperations(MockEndpointController):
     class RequestManager(EndpointControllerWithCustomOperations._RequestManager):
         @staticmethod
-        def with_uppercase_value(request: MockRequestModel) -> MockRequestModel:
+        def with_uppercase_value() -> MockRequestModel:
             """
             Converts the value field of the request to uppercase.
 
@@ -47,7 +49,7 @@ class EndpointControllerWithCustomOperations(MockEndpointController):
             """
 
         @staticmethod
-        def with_switched_field_values(request: MockRequestModel) -> MockRequestModel:
+        def with_switched_field_values() -> MockRequestModel:
             """
             Switches the values of the key and value fields in the request model.
 
@@ -56,7 +58,7 @@ class EndpointControllerWithCustomOperations(MockEndpointController):
             """
 
         @staticmethod
-        def with_hardcoded_value(request: MockRequestModel, value: str) -> MockRequestModel:
+        def with_hardcoded_value(value: str) -> MockRequestModel:
             """
             Sets the value field of the request to a hardcoded value.
 
@@ -92,7 +94,7 @@ class EndpointControllerWithCustomOperations(MockEndpointController):
 
             :return: The pending request data or None if not set."""
 
-        def send(self) -> MockResponseModel:
+        def send(self) -> typing.Any:
             """
             Call the endpoint with the provided request data.
 

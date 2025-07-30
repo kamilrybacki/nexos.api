@@ -21,7 +21,7 @@ class WiringDictionaryEntry:
 
 WIRING: dict[str, WiringDictionaryEntry] = {
     ServiceName.NEXOSAI_API_HTTP_CLIENT: WiringDictionaryEntry(
-        service_class=NexosAIAPIService, provider_class=Singleton, modules={"nexosapi.endpoints.controller"}
+        service_class=NexosAIAPIService, provider_class=Singleton, modules={"nexosapi.api.controller"}
     )
 }
 
@@ -40,7 +40,7 @@ def populate_container(container: DynamicContainer, providers_config: dict[str, 
     return modules_to_wire
 
 
-def wire_skd_dependencies() -> None:
+def wire_sdk_dependencies() -> None:
     """
     Wire the SDK dependencies.
     This function is called to ensure that the SDK services are properly initialized.

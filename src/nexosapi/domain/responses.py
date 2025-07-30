@@ -1,4 +1,4 @@
-from typing import Literal
+import typing
 
 import httpx
 import pydantic
@@ -27,40 +27,33 @@ class NexosAPIResponse(NullableBaseModel):
 
 class ChatCompletionsResponse(NexosAPIResponse):
     id: str
-    object: str
+    object: str = "chat.completion"
     created: int
     model: str
     choices: list[ChatChoice]
-    usage: UsageInfo | None
-    system_fingerprint: str | None
-    service_tier: Literal["scale", "default"] | None
-
-
-class EmbeddingResponse(NexosAPIResponse):
-    object: str | None
-    data: list[Embedding | None] | None
-    model: str | None
-    usage: UsageInfo | None
+    usage: UsageInfo | None = None
+    system_fingerprint: str | None = None
+    service_tier: typing.Literal["scale", "default"] | None = None
 
 
 class AudioSpeechResponse(NexosAPIResponse): ...
 
 
-class TranscriptionResponse(NexosAPIResponse):
-    text: str
-    language: str | None
-    duration: str | None
-    words: list[TranscriptionWord]
-    segments: list[TranscriptionSegment]
-    model: str | None
+class AudioTranscriptionResponse(NexosAPIResponse):
+    text: str | None = None
+    model: str | None = None
+    language: str | None = None
+    duration: str | None = None
+    words: list[TranscriptionWord] | None = None
+    segments: list[TranscriptionSegment] | None = None
 
 
-class TranslationResponse(NexosAPIResponse):
-    text: str | None
-    duration: str | None
-    model: str | None
-    language: Literal["english"] | None
-    segments: list[TranscriptionSegment]
+class AudioTranslationResponse(NexosAPIResponse):
+    text: str | None = None
+    duration: str | None = None
+    model: str | None = None
+    language: typing.Literal["english"] | None = None
+    segments: list[TranscriptionSegment] | None = None
 
 
 class ImageEndpointsResponse(NexosAPIResponse):
@@ -68,10 +61,17 @@ class ImageEndpointsResponse(NexosAPIResponse):
     data: list[Image]
 
 
+class EmbeddingResponse(NexosAPIResponse):
+    object: str = "list"
+    data: list[Embedding] | None = None
+    model: str | None = None
+    usage: UsageInfo | None = None
+
+
 class StorageUploadResponse(NexosAPIResponse, StorageFile): ...
 
 
-class StoragelistResponse(NexosAPIResponse):
+class StorageListResponse(NexosAPIResponse):
     data: list[StorageFile]
 
 

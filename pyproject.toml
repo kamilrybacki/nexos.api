@@ -82,6 +82,7 @@ ignore = [
 ]
 exclude = [
     "*.pyi",  # ignore type stubs
+    "tests/**",  # ignore tests
 ]
 
 [tool.mypy]
@@ -105,9 +106,9 @@ pretty = true
 
 [[tool.mypy.overrides]]
 module= "**/tests/**"
-disallow_untyped_calls = false
-disallow_untyped_defs = false
-disallow_incomplete_defs = false
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
 check_untyped_defs = false
 ignore_missing_imports = true
 strict_optional = false

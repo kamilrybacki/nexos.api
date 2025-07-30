@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import logging
+import typing
 from types import NoneType
-from typing import Any, Self, get_args, get_origin
 
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
@@ -16,7 +16,7 @@ class NullableBaseModel(BaseModel):
     """
 
     @classmethod
-    def _construct_from_annotation(cls, field: FieldInfo | NullableBaseModel | type) -> Any:
+    def _construct_from_annotation(cls, field: FieldInfo | NullableBaseModel | type) -> typing.Any:
         """
         Constructs a field from its annotation.
         If the field has a default value, it will be used as the return value.
@@ -41,6 +41,9 @@ class NullableBaseModel(BaseModel):
         if hasattr(field, "default") and not isinstance(field.default, (PydanticUndefinedType, PydanticUndefined)):
             return field.default
 
+        if hasattr(field, "__name__") and "Literal" in field.__name__:
+            return None
+
         """
         Try to call the origin if it is callable.
         This is useful for cases where the origin is a class or function
@@ -49,11 +52,11 @@ class NullableBaseModel(BaseModel):
         In case of types which cannot be instantiated, we skip returning the origin
         and proceed with the next checks.
         """
-        origin = get_origin(field)
+        origin = typing.get_origin(field)
         try:
             origin()  # type: ignore
         except TypeError:
-            field_args = get_args(field)
+            field_args = typing.get_args(field)
             if field_args:
                 if field_args[1] is NoneType:
                     return field_args[1]
@@ -61,7 +64,6 @@ class NullableBaseModel(BaseModel):
                     if hasattr(field_args[0], "null"):
                         # If the first argument is a type with a null method, return that
                         return field_args[0].null
-
             if callable(field):
                 # If the field is a callable (like a function or class), return it directly
                 return field
@@ -76,17 +78,20 @@ class NullableBaseModel(BaseModel):
         Inspects the fields of the model and returns a dictionary of field names and their types.
         This is useful for dynamically constructing instances of the model.
         """
-        return {
-            field_name: cls._construct_from_annotation(field_type)()
-            for field_name, field_type in cls.model_fields.items()
-        }
+        fields = {}
+        for field_name, field_type in cls.model_fields.items():
+            constructor = cls._construct_from_annotation(field_type.annotation)
+            if constructor is not None:
+                fields[field_name] = constructor()
+        return fields
 
     @classmethod
-    def null(cls: type[Self]) -> Self:
+    def null(cls: type[typing.Self]) -> typing.Self:
         """
         Returns a null instance of the model with all fields set to None.
         This is useful for cases where no data is expected.
         """
         nulled_data = cls._inspect_fields()
-        logging.info(f"Returning {nulled_data}")
-        return cls.model_validate(nulled_data)
+        non_empty_fields_data = {k: v for k, v in nulled_data.items() if v is not None}
+        logging.warning(f"[SDK] Returning null response: {non_empty_fields_data}")
+        return cls.model_validate(non_empty_fields_data)

@@ -1,6 +1,5 @@
 import typing
 from nexosapi.domain.base import NullableBaseModel as NullableBaseModel
-from pydantic import conint as conint
 
 class Model(NullableBaseModel):
     id: str
@@ -8,8 +7,8 @@ class Model(NullableBaseModel):
     created: int
     owned_by: str
     name: str
-    timeout_ms: None | None
-    stream_timeout_ms: None | None
+    timeout_ms: int | None
+    stream_timeout_ms: int | None
 
 class FunctionCall(NullableBaseModel):
     name: str
@@ -57,5 +56,5 @@ class LogProbs(LogProb):
 
 class LogProbsInfo(NullableBaseModel):
     model_config: typing.ClassVar[dict[str, typing.Any]]
-    content: LogProbs
-    refusal: LogProbs
+    content: LogProbs | None
+    refusal: LogProbs | None

@@ -17,7 +17,7 @@ WIRING: dict[str, WiringDictionaryEntry]
 SDK_SERVICES_CONTAINER: DynamicContainer
 
 def populate_container(container: DynamicContainer, providers_config: dict[str, WiringDictionaryEntry]) -> set[str]: ...
-def wire_skd_dependencies() -> None:
+def wire_sdk_dependencies() -> None:
     """
     Wire the SDK dependencies.
     This function is called to ensure that the SDK services are properly initialized.

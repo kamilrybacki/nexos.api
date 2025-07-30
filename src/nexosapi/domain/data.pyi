@@ -15,18 +15,26 @@ class Audio(NullableBaseModel):
 
 class ChatMessage(NullableBaseModel):
     role: Literal["system", "user", "assistant", "tool", "function", "developer"] | None
-    refusal: str
-    tool_calls: list[ToolCall]
-    content: str
-    function_call: FunctionCall
-    audio: Audio
-    annotations: list[Annotation]
+    refusal: str | None
+    tool_calls: list[ToolCall] | None
+    content: str | None
+    function_call: FunctionCall | None
+    audio: Audio | None
+    annotations: list[Annotation] | None
+
+class PredictionType(NullableBaseModel):
+    type: str
+    content: str | None
+
+class AudioConfiguration(NullableBaseModel):
+    voice: Literal["alloy", "echo", "fable", "onyx", "nova", "shimmer"]
+    format: Literal["mp3", "opus", "flac", "wav", "pcm16"]
 
 class ChatChoice(NullableBaseModel):
     index: int
     message: ChatMessage
     finish_reason: str
-    logprobs: LogProbsInfo
+    logprobs: LogProbsInfo | None
 
 class TranscriptionWord(NullableBaseModel):
     word: str
@@ -46,11 +54,11 @@ class TranscriptionSegment(NullableBaseModel):
     no_speech_prob: float
 
 class StorageFile(NullableBaseModel):
-    size: int
-    created_at: int
+    size: int | None
+    created_at: int | None
     expires_at: int | None
-    filename: str
-    id: str
+    filename: str | None
+    id: str | None
     purpose: (
         Literal["assistants", "assistants_output", "batch", "batch_output", "fine-tune", "fine-tune-results", "vision"]
         | None

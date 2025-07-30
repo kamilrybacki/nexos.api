@@ -1,8 +1,9 @@
-from typing import Any, Literal
+import typing
 
-from pydantic import BaseModel, conint, constr
+import pydantic
+from pydantic import BaseModel
 
-from nexosapi.domain.data import ChatMessage
+from nexosapi.domain.data import AudioConfiguration, ChatMessage, PredictionType
 
 
 class NexosAPIRequest(BaseModel):
@@ -16,99 +17,102 @@ class NexosAPIRequest(BaseModel):
 class ChatCompletionsRequest(NexosAPIRequest):
     model: str
     messages: list[ChatMessage]
-    store: bool | None = False
+    store: bool | None = None
     metadata: dict[str, str] | None = None
-    frequency_penalty: float | None = 0
+    frequency_penalty: float = 0
     logit_bias: dict[str, float] | None = None
-    logprobs: bool | None = False
-    top_logprobs: conint(ge=0, le=20) | None = None
-    max_tokens: int | None = None
+    logprobs: bool | None = None
+    top_logprobs: int | None = pydantic.Field(ge=0, le=20, default=None)
     max_completion_tokens: int | None = None
-    n: conint(ge=1, le=128) | None = 1
-    modalities: list[Literal["text", "audio"]] | None = ["text"]
-    presence_penalty: float | None = 0
-    response_format: dict[str, Any] | None = None
-    seed: int | None = None
-    service_tier: Literal["auto", "default"] | None = "auto"
+    n: int = pydantic.Field(ge=1, le=128, default=1)
+    modalities: list[typing.Literal["text", "audio"]] = ["text"]
+    prediction: PredictionType | None = None
+    presence_penalty: float = 0
+    audio: AudioConfiguration | None = None
+    response_format: dict[str, typing.Any] | None = None
+    seed: int | None = pydantic.Field(ge=-9223372036854776000, le=9223372036854776000, default=None)
+    service_tier: typing.Literal["auto", "default"] = "auto"
     stop: str | list[str] | None = None
-    stream: bool | None = False
-    stream_options: dict[str, Any] | None = None
-    temperature: float | None = 1
-    top_p: float | None = 1
-    tools: list[dict[str, Any]] | None = None
-    tool_choice: str | dict[str, Any] | None = "none"
-    parallel_tool_calls: bool | None = True
-    function_call: str | dict[str, Any] | None = "none"
-    functions: list[dict[str, Any]] | None = None
-    thinking: dict[str, Any] | None = None
-
-
-class EmbeddingRequest(NexosAPIRequest):
-    model: str
-    input: str | list[str] | list[int] | list[list[int]]
-    encoding_format: Literal["float", "base64"] | None = "float"
-    dimensions: int | None = None
+    stream: bool | None = None
+    stream_options: dict[str, typing.Any] | None = None
+    temperature: float = 1
+    top_p: float = 1
+    tools: list[dict[str, typing.Any]] | None = None
+    tool_choice: str | dict[str, typing.Any] = "none"
+    parallel_tool_calls: bool = True
+    thinking: dict[str, typing.Any] | None = None
 
 
 class AudioSpeechRequest(NexosAPIRequest):
     model: str
-    input: constr(max_length=4096)
-    voice: Literal["alloy", "echo", "fable", "onyx", "nova", "shimmer"]
-    response_format: Literal["mp3", "opus", "aac", "flac", "wav", "pcm"] | None = "mp3"
-    speed: float | None = 1
+    input: str = pydantic.Field(max_length=4096)
+    voice: typing.Literal["alloy", "echo", "fable", "onyx", "nova", "shimmer"]
+    response_format: typing.Literal["mp3", "opus", "aac", "flac", "wav", "pcm"] = "mp3"
+    speed: float = 1
 
 
 class AudioTranscriptionRequest(NexosAPIRequest):
     model: str
+    file: bytes
     language: str | None = None
     prompt: str | None = None
-    response_format: Literal["json", "text", "srt", "verbose_json", "vtt"] | None = "json"
-    temperature: float | None = 0
-    timestamp_granularities: list[Literal["word", "segment"]] | None = ["segment"]
+    response_format: typing.Literal["json", "text", "srt", "verbose_json", "vtt"] = "json"
+    temperature: float = 0
+    timestamp_granularities: list[typing.Literal["word", "segment"]] = ["segment"]
 
 
 class AudioTranslationRequest(NexosAPIRequest):
     model: str
+    file: bytes
     prompt: str | None = None
-    response_format: Literal["json", "text", "srt", "verbose_json", "vtt"] | None = "json"
-    temperature: float | None = 0
+    response_format: typing.Literal["json", "text", "srt", "verbose_json", "vtt"] = "json"
+    temperature: float = 0
 
 
 class ImageGenerationRequest(NexosAPIRequest):
     prompt: str
     model: str
-    n: int | None = 1
-    quality: Literal["standard", "hd"] | None = "standard"
-    response_format: Literal["url", "b64_json"] | None = "url"
-    size: Literal["256x256", "512x512", "1024x1024", "1792x1024", "1024x1792"] | None = "256x256"
-    style: Literal["vivid", "natural"] | None = "vivid"
+    n: int = 1
+    quality: typing.Literal["standard", "hd"] = "standard"
+    response_format: typing.Literal["url", "b64_json"] = "url"
+    size: typing.Literal["256x256", "512x512", "1024x1024", "1792x1024", "1024x1792"] = "256x256"
+    style: typing.Literal["vivid", "natural"] = "vivid"
 
 
 class ImageEditRequest(NexosAPIRequest):
-    prompt: constr(max_length=1000)
     model: str
-    n: int | None = 1
-    response_format: Literal["url", "b64_json"] | None = "url"
-    size: Literal["256x256", "512x512", "1024x1024"] | None = "256x256"
+    image: bytes
+    prompt: str = pydantic.Field(max_length=1000)
+    n: int = 1
+    response_format: typing.Literal["url", "b64_json"] = "url"
+    size: typing.Literal["256x256", "512x512", "1024x1024"] = "256x256"
 
 
 class ImageVariationRequest(NexosAPIRequest):
+    image: bytes
     model: str
-    n: int | None = 1
-    response_format: Literal["url", "b64_json"] | None = "url"
-    size: Literal["256x256", "512x512", "1024x1024"] | None = "256x256"
+    n: int = 1
+    response_format: typing.Literal["url", "b64_json"] = "url"
+    size: typing.Literal["256x256", "512x512", "1024x1024"] = "256x256"
+
+
+class EmbeddingRequest(NexosAPIRequest):
+    model: str
+    input: str | list[str] | list[int] | list[list[int]] | None = None
+    encoding_format: typing.Literal["float", "base64"] = "float"
+    dimensions: int
 
 
 class StorageUploadRequest(NexosAPIRequest):
     file: str | bytes | list[bytes]
-    purpose: Literal["assistants", "batch", "fine-tune", "vision", "user_data", "evals"]
+    purpose: typing.Literal["assistants", "batch", "fine-tune", "vision", "user_data", "evals"]
 
 
 class StorageListRequest(NexosAPIRequest):
     after: str | None = None
-    limit: conint(ge=1, le=10000) | None = 10000
-    order: Literal["asc", "desc"] | None = "desc"
-    purpose: Literal["assistants", "batch", "fine-tune", "vision", "user_data", "evals"] | None = None
+    limit: int = pydantic.Field(ge=0, le=10000, default=10000)
+    order: typing.Literal["asc", "desc"] = "desc"
+    purpose: typing.Literal["assistants", "batch", "fine-tune", "vision", "user_data", "evals"] | None = None
 
 
 class StorageDownloadRequest(NexosAPIRequest):

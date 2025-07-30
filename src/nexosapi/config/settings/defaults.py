@@ -3,3 +3,5 @@ NEXOSAI_BASE_URL = "https://api.nexos.ai"
 NEXOSAI_API_VERSION = "v1"
 NEXOSAI_AUTH_HEADER_NAME = "Authorization"
 NEXOSAI_AUTH_HEADER_PREFIX = "Bearer"
+
+COMPLETIONS_FALLBACK_MODEL = "gpt-3.5-turbo"

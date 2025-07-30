@@ -1,4 +1,5 @@
 import pydantic
+import typing
 from _typeshed import Incomplete
 from nexosapi.domain.base import NullableBaseModel as NullableBaseModel
 from nexosapi.domain.data import (
@@ -11,7 +12,6 @@ from nexosapi.domain.data import (
     TranscriptionWord as TranscriptionWord,
 )
 from nexosapi.domain.metadata import Model as Model, UsageInfo as UsageInfo
-from typing import Literal
 
 class NexosAPIResponse(NullableBaseModel):
     class Config:
@@ -26,38 +26,38 @@ class ChatCompletionsResponse(NexosAPIResponse):
     choices: list[ChatChoice]
     usage: UsageInfo | None
     system_fingerprint: str | None
-    service_tier: Literal["scale", "default"] | None
-
-class EmbeddingResponse(NexosAPIResponse):
-    object: str | None
-    data: list[Embedding | None] | None
-    model: str | None
-    usage: UsageInfo | None
+    service_tier: typing.Literal["scale", "default"] | None
 
 class AudioSpeechResponse(NexosAPIResponse): ...
 
-class TranscriptionResponse(NexosAPIResponse):
-    text: str
+class AudioTranscriptionResponse(NexosAPIResponse):
+    text: str | None
+    model: str | None
     language: str | None
     duration: str | None
     words: list[TranscriptionWord]
     segments: list[TranscriptionSegment]
-    model: str | None
 
-class TranslationResponse(NexosAPIResponse):
+class AudioTranslationResponse(NexosAPIResponse):
     text: str | None
     duration: str | None
     model: str | None
-    language: Literal["english"] | None
+    language: typing.Literal["english"] | None
     segments: list[TranscriptionSegment]
 
 class ImageEndpointsResponse(NexosAPIResponse):
     created: int
     data: list[Image]
 
+class EmbeddingResponse(NexosAPIResponse):
+    object: str
+    data: list[Embedding] | None
+    model: str | None
+    usage: UsageInfo | None
+
 class StorageUploadResponse(NexosAPIResponse, StorageFile): ...
 
-class StoragelistResponse(NexosAPIResponse):
+class StorageListResponse(NexosAPIResponse):
     data: list[StorageFile]
 
 class StorageFileResponse(NexosAPIResponse, StorageFile): ...

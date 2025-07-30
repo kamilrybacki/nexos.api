@@ -7,7 +7,6 @@ from collections.abc import Callable, Generator
 from contextlib import AbstractContextManager
 from pathlib import Path
 from unittest import mock
-from unittest.mock import AsyncMock
 
 import pytest
 from dependency_injector.providers import Singleton
@@ -16,7 +15,7 @@ from testcontainers.core.image import DockerImage
 from testcontainers.core.waiting_utils import wait_for_logs
 
 import nexosapi.config.setup
-from nexosapi.config.setup import ServiceName, WiringDictionaryEntry
+from nexosapi.config.setup import ServiceName, WiringDictionaryEntry, wire_sdk_dependencies
 from nexosapi.services.http import NexosAIAPIService
 from tests.conftest import ASSETS_DIR
 from tests.mocks import MockAIAPIService
@@ -75,7 +74,7 @@ def using_test_api_container() -> Callable[..., Generator[str]]:
 
 
 def mock_api_injected_into_services_wiring(
-    service: AsyncMock,
+    service: type[MockAIAPIService],
 ) -> AbstractContextManager[Callable[..., Generator[None]]]:
     """
     Context manager to inject a mock API service into the given service class.
@@ -85,7 +84,7 @@ def mock_api_injected_into_services_wiring(
     """
 
     @contextlib.contextmanager
-    def _inject_mock_api(mock_service: MockAIAPIService) -> Generator[None]:
+    def _inject_mock_api(mock_service: type[MockAIAPIService]) -> Generator[None]:
         original_services_wiring = copy.deepcopy(nexosapi.config.setup.WIRING)
         try:
             with mock.patch(
@@ -94,7 +93,7 @@ def mock_api_injected_into_services_wiring(
                     ServiceName.NEXOSAI_API_HTTP_CLIENT: WiringDictionaryEntry(
                         service_class=mock_service,  # type: ignore
                         provider_class=Singleton,
-                        modules={"nexosapi.endpoints.controller"},
+                        modules={"nexosapi.api.controller"},
                     )
                 },
             ):
@@ -103,3 +102,38 @@ def mock_api_injected_into_services_wiring(
             service._api_service = original_services_wiring
 
     return _inject_mock_api(service)  # type: ignore
+
+
+@pytest.fixture
+def initialized_controller[ControllerType](
+    using_test_api_container: Callable[[], NexosAIAPIService],
+    service_environment: Callable[..., Generator],
+) -> Callable[..., Generator[ControllerType]]:
+    """
+    Fixture to initialize the NexosAI API service controller.
+
+    This fixture sets up the environment variables and starts the test API container.
+
+    :param using_test_api_container: A callable that starts the test API container.
+    :param service_environment: A callable that patches the environment variables.
+
+    """
+
+    @contextlib.contextmanager
+    def _with_initialized_controller[ControllerType](
+        controller_class: type[ControllerType],
+    ) -> Generator[ControllerType]:
+        with (
+            using_test_api_container() as api_host,
+            service_environment(
+                {
+                    "NEXOSAI__BASE_URL": f"http://{api_host}",
+                    "NEXOSAI__VERSION": "v1",
+                    "NEXOSAI__API_KEY": MOCK_API_KEY,
+                }
+            ),
+        ):
+            wire_sdk_dependencies()
+            yield controller_class()
+
+    return _with_initialized_controller

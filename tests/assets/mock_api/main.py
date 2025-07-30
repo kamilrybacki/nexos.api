@@ -19,11 +19,11 @@ async def lifespan(_: fastapi.FastAPI) -> typing.AsyncGenerator[None]:
     Lifespan event handler to set up routes when the application starts.
     """
     logging.basicConfig(level=logging.INFO, format="%(levelname)s:  %(message)s")
-    logging.info(f"[API] Mock NEXOS API key: {expected_api_key}")
+    logging.info(f"[SDK] Mock NEXOS API key: {expected_api_key}")
     setup_routes()
     mock_nexos.include_router(mock_nexos_router)
     yield
-    logging.info("[API] Mock NEXOS API shutdown.")
+    logging.info("[SDK] Mock NEXOS API shutdown.")
 
 
 mock_nexos = fastapi.FastAPI(
@@ -71,7 +71,7 @@ def endpoint_to_handler(
 def setup_routes() -> None:
     with Path.open(Path(__file__).parent / "data.json") as file:
         mock_responses: dict[str, MockAPIRouteDefinition] = json.load(file)
-        logging.info(f"[API] Setting up {len(mock_responses)} routes")
+        logging.info(f"[SDK] Setting up {len(mock_responses)} routes")
         for route_endpoint, route_definition in mock_responses.items():
             handler = endpoint_to_handler(route_endpoint, route_definition["response"])
             mock_nexos_router.add_api_route(

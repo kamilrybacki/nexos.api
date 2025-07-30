@@ -4,10 +4,10 @@ import typing
 
 import httpx
 
+from nexosapi.api.controller import NexosAIAPIEndpointController
 from nexosapi.config.settings.services import NexosAIAPIConfiguration
 from nexosapi.domain.requests import NexosAPIRequest
 from nexosapi.domain.responses import NexosAPIResponse
-from nexosapi.endpoints.controller import NexosAIEndpointController
 from nexosapi.services.http import NexosAIAPIService
 
 
@@ -35,14 +35,16 @@ class MockAIAPIService(NexosAIAPIService):
         if verb == "POST":
             # Simulate a successful response for the mock endpoint
             if post_data := kwargs.get("json", kwargs.get("data")):
-                logging.info("[API] Mock POST request data: %s", post_data)
+                logging.info("[SDK] Mock POST request data: %s", post_data)
                 if isinstance(post_data, str):
                     try:
                         post_data = json.loads(post_data)
                     except json.JSONDecodeError:
-                        logging.exception("[API] Failed to decode JSON from POST data: %s", post_data)
+                        logging.exception("[SDK] Failed to decode JSON from POST data: %s", post_data)
                         return httpx.Response(status_code=400, json={"error": "Invalid JSON format"})
-
+                if not isinstance(post_data, dict):
+                    logging.error("[SDK] POST data is not a dictionary: %s", post_data)
+                    return httpx.Response(status_code=400, json={"error": "Invalid request data format"})
                 return httpx.Response(
                     status_code=200, json={"key": post_data.get("key", ""), "value": post_data.get("value", "")}
                 )
@@ -56,8 +58,10 @@ class MockAIAPIService(NexosAIAPIService):
 MOCK_ENDPOINT_PATH = "post:/mock_path"
 
 
-class MockEndpointController[MockRequestModel, MockResponseModel](NexosAIEndpointController):
+class MockEndpointController(NexosAIAPIEndpointController):
     endpoint: typing.ClassVar[str] = MOCK_ENDPOINT_PATH
+    request_model = MockRequestModel
+    response_model = MockResponseModel
 
 
 class EndpointControllerWithCustomOperations(MockEndpointController):

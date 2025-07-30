@@ -3,9 +3,10 @@ import dataclasses
 import inspect
 import logging
 import typing
+from ast import get_docstring
 from pathlib import Path
 
-from nexosapi.endpoints.controller import EndpointResponseType, NexosAIEndpointController
+from nexosapi.api.controller import EndpointResponseType, NexosAIAPIEndpointController
 
 
 class ControllerDataModelsDict(typing.TypedDict):
@@ -42,7 +43,7 @@ class RequestMakerRewriter(ast.NodeTransformer):
         :param body: The body of the Operations class to be added.
         :param data_models: The data models dictionary containing request and response models.
         """
-        original_request_maker = NexosAIEndpointController._RequestManager
+        original_request_maker = NexosAIAPIEndpointController._RequestManager
         if not hasattr(original_request_maker, "__dict__"):
             logging.warning("Original RequestManager does not have a __dict__ attribute. Skipping method addition.")
             return
@@ -55,7 +56,7 @@ class RequestMakerRewriter(ast.NodeTransformer):
 
             if callable(getattr(original_request_maker, method_name, None)):
                 original_method = getattr(original_request_maker, method_name)
-                logging.info(f"Adding method {method_name} from {original_method.__qualname__}")
+                logging.info(f"[TYPES] Adding method {method_name} from {original_method.__qualname__}")
                 arguments_spec = inspect.getfullargspec(original_method)
                 docstring = self._indent_docstring(original_method.__doc__)
                 variable_type_hints = typing.get_type_hints(original_method)
@@ -83,9 +84,9 @@ class RequestMakerRewriter(ast.NodeTransformer):
                 if return_annotation.__name__ in str(EndpointResponseType):  # type: ignore
                     # If the return type is EndpointResponseType, we need to use the response model from data_models
                     if data_models:  # noqa: SIM108
-                        return_annotation = data_models.get("response_model", "Any")
+                        return_annotation = data_models.get("response_model", "typing.Any")
                     else:
-                        return_annotation = "Any"
+                        return_annotation = "typing.Any"
 
                 serialized_return_annotation = (
                     return_annotation.__name__ if isinstance(return_annotation, type) else str(return_annotation)
@@ -96,7 +97,6 @@ class RequestMakerRewriter(ast.NodeTransformer):
                     {"returns": ast.Name(id=serialized_return_annotation, ctx=ast.Load())} if return_annotation else {}
                 )
 
-                logging.info(returned_objects)
                 compiled_method = ast.FunctionDef(
                     name=method_name,
                     args=ast.arguments(
@@ -114,9 +114,34 @@ class RequestMakerRewriter(ast.NodeTransformer):
             if method.name not in body:
                 body.append(method)
 
+    @staticmethod
+    def remove_request_argument_from_methods(body: list[ast.stmt]) -> list[ast.stmt]:
+        """
+        Removes the 'request' argument from all methods in the Operations class.
+
+        :param body: The body of the Operations class.
+        :return: The modified body with 'request' argument removed from methods.
+        """
+        new_body: list[ast.stmt] = []
+        for stmt in body:
+            if isinstance(stmt, ast.FunctionDef):
+                # Remove 'request' argument if it exists
+                new_args = [arg for arg in stmt.args.args if arg.arg != "request"]
+                stmt.args.args = new_args
+                if hasattr(stmt, "__doc__") and stmt.__doc__:
+                    # Remove :param definition for 'request' in the docstring
+                    docstring_lines = (get_docstring(stmt) or "").splitlines()
+                    new_docstring = "\n".join(line for line in docstring_lines if ":param request:" not in line)
+                    logging.info(new_docstring)
+                    stmt.docstring = new_docstring
+                new_body.append(stmt)
+            else:
+                new_body.append(stmt)
+        return new_body
+
     def visit_ClassDef(self, node: ast.ClassDef) -> ast.ClassDef:  # noqa: N802
         type_params = node.__dict__.get("type_params")
-        if type_params and node.name != NexosAIEndpointController.__name__:
+        if type_params and node.name != NexosAIAPIEndpointController.__name__:
             # If the class has type parameters, store them for later use
             request_model, response_model = type_params
             self._generics[node.name] = ControllerDataModelsDict(
@@ -133,7 +158,7 @@ class RequestMakerRewriter(ast.NodeTransformer):
 
         for stmt in node.body:
             if isinstance(stmt, ast.ClassDef) and stmt.name == "Operations":
-                new_request_maker_body = stmt.body
+                new_request_maker_body = self.remove_request_argument_from_methods(stmt.body)
                 self.modified = True
             else:
                 new_endpoint_controller_body.append(stmt)
@@ -144,7 +169,7 @@ class RequestMakerRewriter(ast.NodeTransformer):
                 data_models = self._generics[base.id]
                 break
 
-        original_request_maker_class_name = NexosAIEndpointController._RequestManager.__name__
+        original_request_maker_class_name = NexosAIAPIEndpointController._RequestManager.__name__
         new_request_maker_class_name = original_request_maker_class_name.removeprefix("_")
         if new_request_maker_body:
             # Construct new RequestMaker class
@@ -167,7 +192,7 @@ class RequestMakerRewriter(ast.NodeTransformer):
                 decorator_list=[],
             )
             request_maker_type_assignment = ast.Assign(
-                targets=[ast.Name(id=NexosAIEndpointController.REQUEST_MANAGER_CLASS.__name__, ctx=ast.Store())],
+                targets=[ast.Name(id=NexosAIAPIEndpointController.REQUEST_MANAGER_CLASS.__name__, ctx=ast.Store())],
                 value=ast.Name(id=new_request_maker_class_name, ctx=ast.Load()),
             )
             request_maker_accessor_assignment = ast.Assign(
@@ -210,6 +235,7 @@ def apply_rewrites_to_stub(stub_path: str, exclude_classes: list[str]) -> None:
     ast.fix_missing_locations(transformed_tree)
 
     if transformer.modified:
-        new_code = "from __future__ import annotations\n\n" + ast.unparse(transformed_tree)
+        additional_imports = ["from __future__ import annotations", "import typing"]
+        new_code = "\n".join(additional_imports) + "\n" + ast.unparse(transformed_tree)
         path.write_text(new_code, encoding="utf-8")
         logging.info(f"Rewrites applied to {stub_path}.")

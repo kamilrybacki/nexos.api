@@ -1,6 +1,6 @@
 import typing
 
-from pydantic import conint
+import pydantic
 
 from nexosapi.domain.base import NullableBaseModel
 
@@ -11,8 +11,8 @@ class Model(NullableBaseModel):
     created: int
     owned_by: str
     name: str
-    timeout_ms: conint(ge=1) | None = None
-    stream_timeout_ms: conint(ge=1) | None = None
+    timeout_ms: int | None = pydantic.Field(ge=1, default=None)
+    stream_timeout_ms: int | None = pydantic.Field(ge=1, default=None)
 
 
 class FunctionCall(NullableBaseModel):
@@ -52,10 +52,10 @@ class PromptTokenDetails(NullableBaseModel):
 
 class UsageInfo(NullableBaseModel):
     total_tokens: int
-    prompt_tokens: int | None
-    completion_tokens: int | None
-    completion_token_details: CompletionTokenDetails | None
-    prompt_token_details: PromptTokenDetails | None
+    prompt_tokens: int | None = None
+    completion_tokens: int | None = None
+    completion_token_details: CompletionTokenDetails | None = None
+    prompt_token_details: PromptTokenDetails | None = None
 
 
 class LogProb:
@@ -70,5 +70,5 @@ class LogProbs(LogProb):
 
 class LogProbsInfo(NullableBaseModel):
     model_config: typing.ClassVar[dict[str, typing.Any]] = {"arbitrary_types_allowed": True}
-    content: LogProbs
-    refusal: LogProbs
+    content: LogProbs | None = None
+    refusal: LogProbs | None = None

@@ -89,7 +89,7 @@ if __name__ == "__main__":
             ):
                 logging.debug(f"Removing stub file: {stub_file_path}")
                 Path(stub_file_path).unlink(missing_ok=True)
-            apply_rewrites_to_stub(stub_file_path, exclude_classes=["NexosAIEndpointController"])
+            apply_rewrites_to_stub(stub_file_path, exclude_classes=["NexosAIAPIEndpointController"])
         include_stubs(output=output_dir, src=src_dir, tests=test_dir)
     except Exception as e:
         logging.exception("An error occurred during stub generation and rewriting.", exc_info=e)
