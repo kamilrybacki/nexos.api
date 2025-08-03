@@ -41,31 +41,22 @@ class EndpointControllerWithCustomOperations(MockEndpointController):
     class RequestManager(EndpointControllerWithCustomOperations._RequestManager):
         @staticmethod
         def with_uppercase_value() -> MockRequestModel:
-            """
-            Converts the value field of the request to uppercase.
+            """Converts the value field of the request to uppercase.
 
-            :param request: The request model to modify.
-            :return: The modified request model with the value field in uppercase.
-            """
+            :return: The modified request model with the value field in uppercase."""
 
         @staticmethod
         def with_switched_field_values() -> MockRequestModel:
-            """
-            Switches the values of the key and value fields in the request model.
+            """Switches the values of the key and value fields in the request model.
 
-            :param request: The request model to modify.
-            :return: The modified request model with key and value fields switched.
-            """
+            :return: The modified request model with key and value fields switched."""
 
         @staticmethod
         def with_hardcoded_value(value: str) -> MockRequestModel:
-            """
-            Sets the value field of the request to a hardcoded value.
+            """Sets the value field of the request to a hardcoded value.
 
-            :param request: The request model to modify.
             :param value: The hardcoded value to set in the request model.
-            :return: The modified request model with the value field set to the hardcoded value.
-            """
+            :return: The modified request model with the value field set to the hardcoded value."""
 
         def get_verb_from_endpoint(self, endpoint: str) -> str:
             """

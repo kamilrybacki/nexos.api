@@ -4,6 +4,7 @@ import pydantic
 from pydantic import BaseModel
 
 from nexosapi.domain.data import AudioConfiguration, ChatMessage, PredictionType
+from nexosapi.domain.metadata import ChatThinkingModeConfiguration
 
 
 class NexosAPIRequest(BaseModel):
@@ -19,7 +20,7 @@ class ChatCompletionsRequest(NexosAPIRequest):
     messages: list[ChatMessage]
     store: bool | None = None
     metadata: dict[str, str] | None = None
-    frequency_penalty: float = 0
+    frequency_penalty: float = 0.0
     logit_bias: dict[str, float] | None = None
     logprobs: bool | None = None
     top_logprobs: int | None = pydantic.Field(ge=0, le=20, default=None)
@@ -27,7 +28,7 @@ class ChatCompletionsRequest(NexosAPIRequest):
     n: int = pydantic.Field(ge=1, le=128, default=1)
     modalities: list[typing.Literal["text", "audio"]] = ["text"]
     prediction: PredictionType | None = None
-    presence_penalty: float = 0
+    presence_penalty: float = 0.0
     audio: AudioConfiguration | None = None
     response_format: dict[str, typing.Any] | None = None
     seed: int | None = pydantic.Field(ge=-9223372036854776000, le=9223372036854776000, default=None)
@@ -35,12 +36,12 @@ class ChatCompletionsRequest(NexosAPIRequest):
     stop: str | list[str] | None = None
     stream: bool | None = None
     stream_options: dict[str, typing.Any] | None = None
-    temperature: float = 1
-    top_p: float = 1
+    temperature: float = 1.0
+    top_p: float = 1.0
     tools: list[dict[str, typing.Any]] | None = None
     tool_choice: str | dict[str, typing.Any] = "none"
     parallel_tool_calls: bool = True
-    thinking: dict[str, typing.Any] | None = None
+    thinking: ChatThinkingModeConfiguration | None = None
 
 
 class AudioSpeechRequest(NexosAPIRequest):
@@ -48,7 +49,7 @@ class AudioSpeechRequest(NexosAPIRequest):
     input: str = pydantic.Field(max_length=4096)
     voice: typing.Literal["alloy", "echo", "fable", "onyx", "nova", "shimmer"]
     response_format: typing.Literal["mp3", "opus", "aac", "flac", "wav", "pcm"] = "mp3"
-    speed: float = 1
+    speed: float = 1.0
 
 
 class AudioTranscriptionRequest(NexosAPIRequest):
@@ -57,7 +58,7 @@ class AudioTranscriptionRequest(NexosAPIRequest):
     language: str | None = None
     prompt: str | None = None
     response_format: typing.Literal["json", "text", "srt", "verbose_json", "vtt"] = "json"
-    temperature: float = 0
+    temperature: float = 0.0
     timestamp_granularities: list[typing.Literal["word", "segment"]] = ["segment"]
 
 
@@ -66,7 +67,7 @@ class AudioTranslationRequest(NexosAPIRequest):
     file: bytes
     prompt: str | None = None
     response_format: typing.Literal["json", "text", "srt", "verbose_json", "vtt"] = "json"
-    temperature: float = 0
+    temperature: float = 0.0
 
 
 class ImageGenerationRequest(NexosAPIRequest):

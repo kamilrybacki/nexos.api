@@ -2,6 +2,11 @@ from pathlib import Path
 
 import mypy.stubgen
 
+ADDITIONAL_ARGUMENTS = [
+    "--include-private",
+    "--include-docstrings",
+]
+
 
 def compile_stubs(output_dir: Path) -> None:
     """
@@ -9,5 +14,5 @@ def compile_stubs(output_dir: Path) -> None:
 
     :param output_dir: The directory where the generated stubs will be saved.
     """
-    mypy.stubgen.main(["src", "-o", str(output_dir), "--include-docstrings"])
-    mypy.stubgen.main(["tests", "-o", str(output_dir), "--include-docstrings"])
+    mypy.stubgen.main(["src", "-o", str(output_dir), *ADDITIONAL_ARGUMENTS])
+    mypy.stubgen.main(["tests", "-o", str(output_dir), *ADDITIONAL_ARGUMENTS])

@@ -30,12 +30,12 @@ class NexosAIAPIEndpointController[EndpointRequestType, EndpointResponseType]:
     This class defines the structure for endpoint controllers in the Nexos AI API.
     """
 
-    VALID_ENDPOINT_REGEX: typing.ClassVar[str] = r"^(post|get|delete|patch):(\/[a-zA-Z0-9\/_-]+)$"
-
-    api_service: NexosAIAPIService = Provide[ServiceName.NEXOSAI_API_HTTP_CLIENT]
     endpoint: typing.ClassVar[str | None] = dataclasses.field(init=False, default=None)
     request_model: EndpointRequestType = dataclasses.field(init=False)
     response_model: EndpointResponseType = dataclasses.field(init=False)
+
+    VALID_ENDPOINT_REGEX: typing.ClassVar[str] = r"^(post|get|delete|patch):(\/[a-zA-Z0-9\/_-]+)$"
+    api_service: NexosAIAPIService = Provide[ServiceName.NEXOSAI_API_HTTP_CLIENT]
 
     class Operations:
         """

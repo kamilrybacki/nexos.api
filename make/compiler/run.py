@@ -1,5 +1,4 @@
 import logging
-import re
 from pathlib import Path
 from shutil import rmtree
 
@@ -9,6 +8,9 @@ from rewrite import apply_rewrites_to_stub
 from nexosapi.common.logging import setup_logging
 
 STUBGEN_OUTPUT_DIR = "stubs"
+FILES_TO_EXPLICITLY_REWRITE = [
+    "tests/mocks.pyi",
+]
 
 
 def include_stubs(output: Path, src: Path, tests: Path) -> None:
@@ -79,16 +81,18 @@ if __name__ == "__main__":
         )
         compile_stubs(output_dir=output_dir)
         for stub_file_path in generate_file_tree_paths_for_directory(path=output_dir):
-            if any(
-                [
-                    Path(stub_file_path.removesuffix(".pyi")).is_dir(),  # Skip directories
-                    re.match("(.*)test_(.*).pyi", stub_file_path),  # Skip test files
-                    "__pycache__" in stub_file_path,  # Skip __pycache__ directories
-                    "__init__.py" in stub_file_path,  # Skip __init__.py files
-                ]
-            ):
-                logging.debug(f"Removing stub file: {stub_file_path}")
-                Path(stub_file_path).unlink(missing_ok=True)
+            if not any(file in stub_file_path for file in FILES_TO_EXPLICITLY_REWRITE):
+                if any(
+                    [
+                        Path(stub_file_path.removesuffix(".pyi")).is_dir(),  # Skip directories
+                        "__pycache__" in stub_file_path,  # Skip __pycache__ directories
+                        "__init__.py" in stub_file_path,  # Skip __init__.py files
+                        "/api/" not in Path(stub_file_path.removesuffix(".py")).as_posix(),  # Skip non-API files
+                    ]
+                ):
+                    logging.debug(f"Removing stub file: {stub_file_path}")
+                    Path(stub_file_path).unlink(missing_ok=True)
+                    continue
             apply_rewrites_to_stub(stub_file_path, exclude_classes=["NexosAIAPIEndpointController"])
         include_stubs(output=output_dir, src=src_dir, tests=test_dir)
     except Exception as e:

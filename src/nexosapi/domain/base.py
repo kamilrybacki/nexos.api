@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import logging
 import typing
+from collections.abc import Callable  # noqa: TC003
 from types import NoneType
+from typing import Any, Literal
 
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
+from pydantic.main import IncEx  # noqa: TC002
 from pydantic_core._pydantic_core import PydanticUndefined, PydanticUndefinedType
 
 
@@ -86,12 +89,49 @@ class NullableBaseModel(BaseModel):
         return fields
 
     @classmethod
-    def null(cls: type[typing.Self]) -> typing.Self:
+    def null(cls: type[typing.Self], quiet: bool = True) -> typing.Self:
         """
         Returns a null instance of the model with all fields set to None.
         This is useful for cases where no data is expected.
+
+        :param quiet: If True, suppresses logging of the null response.
         """
         nulled_data = cls._inspect_fields()
         non_empty_fields_data = {k: v for k, v in nulled_data.items() if v is not None}
-        logging.warning(f"[SDK] Returning null response: {non_empty_fields_data}")
+        if not quiet:
+            logging.warning(f"[SDK] Returning null response: {non_empty_fields_data}")
         return cls.model_validate(non_empty_fields_data)
+
+    def model_dump(  # noqa: PLR0913
+        self,
+        *,
+        mode: Literal["json", "python"] = "python",  # type: ignore
+        include: IncEx | None = None,
+        exclude: IncEx | None = None,
+        context: Any | None = None,
+        by_alias: bool | None = None,
+        exclude_unset: bool = False,
+        exclude_defaults: bool = False,
+        exclude_none: bool = False,  # noqa: ARG002
+        round_trip: bool = False,
+        warnings: bool | Literal["none", "warn", "error"] = True,
+        fallback: Callable[[Any], Any] | None = None,
+        serialize_as_any: bool = False,
+    ) -> dict[str, Any]:
+        """
+        Dumps the model to a dictionary, excluding fields that are None.
+        """
+        return super().model_dump(
+            mode=mode,
+            include=include,
+            exclude=exclude,
+            context=context,
+            by_alias=by_alias,
+            exclude_unset=exclude_unset,
+            exclude_defaults=exclude_defaults,
+            exclude_none=True,
+            round_trip=round_trip,
+            warnings=warnings,
+            fallback=fallback,
+            serialize_as_any=serialize_as_any,
+        )

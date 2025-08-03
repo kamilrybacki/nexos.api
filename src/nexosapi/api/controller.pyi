@@ -1,6 +1,7 @@
 import dataclasses
 import httpx
 import typing
+from mypy.metastore import random_string
 from nexosapi.common.exceptions import InvalidControllerEndpointError as InvalidControllerEndpointError
 from nexosapi.config.setup import ServiceName as ServiceName
 from nexosapi.domain.base import NullableBaseModel as NullableBaseModel
@@ -18,11 +19,11 @@ class NexosAIAPIEndpointController[EndpointRequestType, EndpointResponseType]:
     This class defines the structure for endpoint controllers in the Nexos AI API.
     """
 
-    VALID_ENDPOINT_REGEX: typing.ClassVar[str] = ...
-    api_service: NexosAIAPIService = ...
     endpoint: typing.ClassVar[str | None] = dataclasses.field(init=False, default=None)
     request_model: EndpointRequestType = dataclasses.field(init=False)
     response_model: EndpointResponseType = dataclasses.field(init=False)
+    VALID_ENDPOINT_REGEX: typing.ClassVar[str] = ...
+    api_service: NexosAIAPIService = ...
     class Operations:
         """
         Enum to define operations for the NexosAIEndpointController.
@@ -45,6 +46,9 @@ class NexosAIAPIEndpointController[EndpointRequestType, EndpointResponseType]:
 
         controller: NexosAIAPIEndpointController = dataclasses.field()
         pending: dict[str, typing.Any] | None = dataclasses.field(init=False, default=None)
+        _last_response: EndpointResponseType | None = dataclasses.field(init=False, default=None)
+        __salt: str = dataclasses.field(init=False, default=random_string())
+        _endpoint = ...
         def __post_init__(self) -> None:
             """
             Post-initialization method to set the endpoint for the request manager.

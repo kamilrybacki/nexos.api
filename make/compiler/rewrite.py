@@ -114,8 +114,7 @@ class RequestMakerRewriter(ast.NodeTransformer):
             if method.name not in body:
                 body.append(method)
 
-    @staticmethod
-    def remove_request_argument_from_methods(body: list[ast.stmt]) -> list[ast.stmt]:
+    def remove_request_argument_from_methods(self, body: list[ast.stmt]) -> list[ast.stmt]:
         """
         Removes the 'request' argument from all methods in the Operations class.
 
@@ -131,9 +130,10 @@ class RequestMakerRewriter(ast.NodeTransformer):
                 if hasattr(stmt, "__doc__") and stmt.__doc__:
                     # Remove :param definition for 'request' in the docstring
                     docstring_lines = (get_docstring(stmt) or "").splitlines()
-                    new_docstring = "\n".join(line for line in docstring_lines if ":param request:" not in line)
-                    logging.info(new_docstring)
-                    stmt.docstring = new_docstring
+                    new_docstring_content = "\n".join(line for line in docstring_lines if ":param request:" not in line)
+                    new_docstring = self._indent_docstring(new_docstring_content)
+                    new_docstring_expr = ast.Expr(value=ast.Constant(value=new_docstring))
+                    stmt.body[0] = new_docstring_expr
                 new_body.append(stmt)
             else:
                 new_body.append(stmt)

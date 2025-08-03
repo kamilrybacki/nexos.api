@@ -64,6 +64,6 @@ def test_nulling_domain_models() -> None:
     assert transcription_model.text is None
     assert transcription_model.language is None
     assert transcription_model.duration is None
-    assert transcription_model.words == []
-    assert transcription_model.segments == []
+    assert transcription_model.words is None
+    assert transcription_model.segments is None
     assert transcription_model.model is None, f"Expected model to be None, but got: {transcription_model.model}"
