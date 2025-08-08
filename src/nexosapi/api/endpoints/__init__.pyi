@@ -1,0 +1,14 @@
+from __future__ import annotations
+import typing
+import dataclasses
+from nexosapi.api.endpoints.chat.completions import (
+    ChatCompletionsEndpointController as ChatCompletionsEndpointController,
+)
+from nexosapi.config.setup import wire_sdk_dependencies as wire_sdk_dependencies
+from typing import ClassVar
+
+@dataclasses.dataclass(frozen=True)
+class ChatEndpoints:
+    completions: ClassVar[ChatCompletionsEndpointController] = ...
+
+chat: ChatEndpoints

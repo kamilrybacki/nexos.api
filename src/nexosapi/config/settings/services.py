@@ -4,7 +4,7 @@ from collections.abc import Generator
 
 import environ
 
-from nexosapi.config.settings.defaults import NEXOSAI_CONFIGURATION_PREFIX
+from nexosapi.config.settings.defaults import NEXOSAI_API_VERSION, NEXOSAI_BASE_URL, NEXOSAI_CONFIGURATION_PREFIX
 
 
 @environ.config(prefix=NEXOSAI_CONFIGURATION_PREFIX)
@@ -20,10 +20,10 @@ class NexosAIAPIConfiguration:
         """Context manager to use the configuration."""
         yield cls.from_environ(environ=os.environ)  # type: ignore
 
-    base_url: str = environ.var(help="Base URL for the API service.", converter=str)
+    base_url: str = environ.var(help="Base URL for the API service.", converter=str, default=NEXOSAI_BASE_URL)
     api_key: str = environ.var(help="API key", converter=str)
     version: str = environ.var(
-        default="v1",
+        default=NEXOSAI_API_VERSION,
         help="Version of the NEXOSAI API to use, e.g., 'v1'.",
     )
 

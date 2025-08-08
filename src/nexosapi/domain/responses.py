@@ -35,6 +35,30 @@ class ChatCompletionsResponse(NexosAPIResponse):
     system_fingerprint: str | None = None
     service_tier: typing.Literal["scale", "default"] | None = None
 
+    @property
+    def tool_calls(self) -> list[dict[str, typing.Any]]:
+        """
+        Extracts and returns a list of tool calls from the chat response choices.
+        Each tool call is represented as a dictionary.
+        """
+        tool_calls = []
+        for choice in self.choices:
+            if choice.message.tool_calls:
+                tool_calls.extend(
+                    [
+                        {
+                            "id": tool_call.id,
+                            "type": tool_call.type,
+                            "function": {
+                                "name": tool_call.function.name,
+                                "arguments": tool_call.function.arguments,
+                            },
+                        }
+                        for tool_call in choice.message.tool_calls
+                    ]
+                )
+        return tool_calls
+
 
 class AudioSpeechResponse(NexosAPIResponse): ...
 

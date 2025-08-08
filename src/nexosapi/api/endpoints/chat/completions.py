@@ -2,15 +2,12 @@ import logging
 import typing
 
 from nexosapi.api.controller import NexosAIAPIEndpointController
-from nexosapi.config.settings.defaults import COMPLETIONS_DEFAULT_SEARCH_ENGINE, FALLBACK_WEB_SEARCH_TOOL_DESCRIPTION
 from nexosapi.domain.metadata import (
     ChatThinkingModeConfiguration,
     OCRToolOptions,
     RAGToolOptions,
     ToolChoiceAsDictionary,
     ToolChoiceFunction,
-    ToolDefinition,
-    ToolModule,
     ToolType,
     WebSearchToolMCP,
     WebSearchToolOptions,
@@ -20,127 +17,57 @@ from nexosapi.domain.requests import ChatCompletionsRequest
 from nexosapi.domain.responses import ChatCompletionsResponse
 
 
-def adjust_tool_choice(
-    request: ChatCompletionsRequest,
-) -> ChatCompletionsRequest:
-    """
-    Adjusts the tool choice in the chat completions request to ensure it is a list.
-
-    :param request: The chat completions request object.
-    :return: The updated request object with tools as a list.
-    """
-    if (request.tools and len(request.tools) > 0) and request.tool_choice == "none":
-        request.tool_choice = "auto"
-    if request.tool_choice == "auto" and not request.tools:
-        logging.warning("[SDK] No tools provided in the request. Defaulting to 'none' tool choice.")
-        request.tool_choice = "none"
-    return request
-
-
 def create_web_search_tool(
-    definition: ToolDefinition,
     options: dict[str, typing.Any] | None = None,
 ) -> dict[str, typing.Any]:
     """
     Creates a definition for a web search tool.
 
-    :param definition: The definition of the web search tool, which should include "name", "query", "description".
     :param options: Additional options for the web search tool, if any.
     :return: A dictionary representing the web search tool definition.
     """
-    query = definition["query"]
-    is_strict = definition.get("strict", None)
-    if options is None:
-        validated_search_options = WebSearchToolOptions(
-            mcp=WebSearchToolMCP(
-                type="query",
-                tool=COMPLETIONS_DEFAULT_SEARCH_ENGINE,  # type: ignore
-                query=query,
-            ),
-        )
-    else:
-        logging.debug(f"[SDK] Using custom search options: {options}")
+    validated_search_options = None
+    if options:
         context_size = options.get("search_context_size", None)
         user_location = options.get("user_location", None)
-        blank_mcp_options = WebSearchToolMCP.null().model_dump()
-        provided_mcp_options = {
-            option_name: option
-            for option_name, option in options.items()
-            if option not in ["name", "description", "strict"]
-        }
-        mcp_options = {
-            "query": query,
-            **blank_mcp_options,
-            **provided_mcp_options,
-        }
         validated_search_options = WebSearchToolOptions(
             search_context_size=context_size,
             user_location=WebSearchUserLocation(**user_location) if user_location else None,
-            mcp=WebSearchToolMCP(**mcp_options),
+            mcp=WebSearchToolMCP(**options.get("mcp", {})) if options.get("mcp") else None,
         )
-        if validated_search_options.mcp.query:
-            validated_search_options.mcp.query = query
-        if validated_search_options.mcp.url:
-            validated_search_options.mcp.url = query
 
     return {
-        "type": "function",
-        "function": {
-            "name": definition["name"],
-            "description": definition["description"] or FALLBACK_WEB_SEARCH_TOOL_DESCRIPTION,
-            **({"parameters": definition["parameters"]} if "parameters" in definition else {}),
-            **({"strict": is_strict} if is_strict is not None else {}),
-        },
-        str(ToolType.WEB_SEARCH): validated_search_options.model_dump(),
+        "type": str(ToolType.WEB_SEARCH),
+        **({str(ToolType.WEB_SEARCH): validated_search_options.model_dump()} if validated_search_options else {}),
     }
 
 
 def create_ocr_tool(
-    definition: ToolDefinition,
-    options: dict[str, typing.Any] | None = None,
+    options: dict[str, typing.Any],
 ) -> dict[str, typing.Any]:
     """
     Creates a definition for an OCR tool.
 
-    :param definition: The definition of the OCR tool, which should include "name", "description".
     :param options: Additional options for the OCR tool, if any.
     :return: A dictionary representing the OCR tool definition.
     """
-    validated_ocr_options = OCRToolOptions(**options) if options else OCRToolOptions.null()
+    validated_ocr_options = OCRToolOptions(**options)
     return {
-        "type": "function",
-        "function": {
-            "name": definition.get("name", "OCR Tool"),
-            "description": definition.get("description", "A tool for performing OCR on images"),
-            **({"strict": definition.get("strict", False)} if "strict" in definition else {}),
-            **({"parameters": definition.get("parameters", {})} if "parameters" in definition else {}),
-        },
-        str(ToolType.OCR): validated_ocr_options.model_dump(exclude_none=True),
+        "type": str(ToolType.OCR),
+        str(ToolType.OCR): validated_ocr_options.model_dump(),
     }
 
 
-def create_rag_tool(definition: ToolDefinition, options: dict[str, typing.Any] | None = None) -> dict[str, typing.Any]:
+def create_rag_tool(options: dict[str, typing.Any]) -> dict[str, typing.Any]:
     """
     Creates a definition for a RAG tool.
-    :param definition: The definition of the RAG tool, which should include "name", "description", and "query".
     :param options: Additional options for the RAG tool, if any.
     :return: A dictionary representing the RAG tool definition.
     """
-    tool_name = definition.get("name", "RAG Tool")
-    tool_description = definition.get("description", "A tool for retrieving and generating content")
-
-    validated_rag_options = RAGToolOptions(**options) if options else RAGToolOptions.null()
+    validated_rag_options = RAGToolOptions(**options)
     return {
-        "type": "function",
-        "function": {
-            "name": tool_name,
-            "description": tool_description,
-            **({"strict": definition.get("strict", False)} if "strict" in definition else {}),
-            **({"parameters": definition.get("parameters", {})} if "parameters" in definition else {}),
-        },
-        str(ToolType.RAG): {
-            "mcp": validated_rag_options.model_dump(exclude_none=True) | {"query": definition["query"]}
-        },
+        "type": str(ToolType.RAG),
+        str(ToolType.RAG): {"mcp": validated_rag_options.model_dump()},
     }
 
 
@@ -165,90 +92,55 @@ class ChatCompletionsEndpointController(NexosAIAPIEndpointController):
         @staticmethod
         def with_search_engine_tool(
             request: ChatCompletionsRequest,
-            definition: ToolDefinition,
-            options: dict[str, typing.Any] | None = None,
+            options: typing.Annotated[dict[str, typing.Any], "model:WebSearchToolOptions"],
         ) -> ChatCompletionsRequest:
             """
             Sets the search engine to be used for the chat completion.
 
             :param request: The request object containing the chat completion parameters.
-            :param definition: The definition of the web search tool to be used.
             :param options: Optional search options to be used with the search engine.
+            :type options: WebSearchToolOptions
             :return: The updated request object with the search engine set.
             """
             if not request.tools:
                 request.tools = []
 
-            request.tools.append(create_web_search_tool(definition, options))
-            return adjust_tool_choice(request)
+            request.tools.append(create_web_search_tool(options))
+            return request
 
         @staticmethod
         def with_rag_tool(
-            request: ChatCompletionsRequest, definition: ToolDefinition, options: dict[str, typing.Any] | None = None
+            request: ChatCompletionsRequest, options: typing.Annotated[dict[str, typing.Any], "model:RAGToolOptions"]
         ) -> ChatCompletionsRequest:
             """
             Sets the RAG tool to be used for the chat completion.
 
             :param request: The request object containing the chat completion parameters.
-            :param definition: The definition of the RAG tool to be used, which should include "name", "description".
             :param options: Additional options for the RAG tool, if any.
             :return: The updated request object with the RAG tool set.
             """
             if request.tools is None:
                 request.tools = []
 
-            request.tools.append(create_rag_tool(definition, options))
-            return adjust_tool_choice(request)
+            request.tools.append(create_rag_tool(options))
+            return request
 
         @staticmethod
         def with_ocr_tool(
-            request: ChatCompletionsRequest, definition: ToolDefinition, options: dict[str, typing.Any] | None = None
+            request: ChatCompletionsRequest, options: typing.Annotated[dict[str, typing.Any], "model:OCRToolOptions"]
         ) -> ChatCompletionsRequest:
             """
             Sets the OCR tool to be used for the chat completion.
 
             :param request: The request object containing the chat completion parameters.
-            :param definition: The definition of the OCR tool to be used, which should include "name", "description".
             :param options: Additional options for the OCR tool, if any.
             :return: The updated request object with the OCR tool set.
             """
             if request.tools is None:
                 request.tools = []
 
-            request.tools.append(create_ocr_tool(definition, options))
-            return adjust_tool_choice(request)
-
-        @staticmethod
-        def with_combined_tool(
-            request: ChatCompletionsRequest, definition: ToolDefinition, modules: list[ToolModule]
-        ) -> ChatCompletionsRequest:
-            """
-            Sets multiple tools to be used for the chat completion.
-
-            :param request: The request object containing the chat completion parameters.
-            :param definition: The definition of the combined tool, which should include "name", "description".
-            :param modules: A list of ToolModule instances, each containing a definition and optional options.
-            :return: The updated request object with the tools set.
-            """
-            if request.tools is None:
-                request.tools = []
-
-            combined_tool = {}
-            for module in modules:
-                module_options = module.get("options")
-
-                match module_type := module["type"]:
-                    case ToolType.WEB_SEARCH:
-                        combined_tool.update(create_web_search_tool(definition, module_options))
-                    case ToolType.RAG:
-                        combined_tool.update(create_rag_tool(definition, module_options))
-                    case ToolType.OCR:
-                        combined_tool.update(create_ocr_tool(definition, module_options))
-                    case _:
-                        logging.error("[SDK] Unsupported tool type: %s. Skipping...", module_type)
-
-            request.tools.append(combined_tool)
-            return adjust_tool_choice(request)
+            request.tools.append(create_ocr_tool(options))
+            return request
 
         @staticmethod
         def with_parallel_tool_calls(request: ChatCompletionsRequest, enabled: bool = True) -> ChatCompletionsRequest:
@@ -259,6 +151,8 @@ class ChatCompletionsEndpointController(NexosAIAPIEndpointController):
             :param enabled: A boolean indicating whether to enable parallel tool calls.
             :return: The updated request object with the parallel tool calls set.
             """
+            if request.tools is None:
+                logging.warning("[SDK] No tools provided, parallel tool calls SHOULD NOT be set.")
             request.parallel_tool_calls = enabled
             return request
 
@@ -291,10 +185,6 @@ class ChatCompletionsEndpointController(NexosAIAPIEndpointController):
             request: ChatCompletionsRequest,
             tool_choice: str,
         ) -> ChatCompletionsRequest:
-            if not tool_choice:
-                logging.warning("[SDK] No tool choice settings provided. Using default 'auto' tool choice.")
-                return adjust_tool_choice(request)
-
             # Check if passed tool_choice is a string in format 'name:<function_name>'
             if tool_choice.startswith("name:"):
                 validated_tool_choice_settings = ToolChoiceAsDictionary(

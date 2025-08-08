@@ -28,7 +28,7 @@ def test_endpoint_with_valid_format_initializes_correctly():
 
 
 @pytest.mark.asyncio
-async def test_send_with_valid_request_returns_successful_response(service_environment):
+async def test_send_with_valid_request_returns_successful_response(service_environment, caplog):
     with (
         mock_api_injected_into_services_wiring(MockAIAPIService),
         service_environment(
@@ -37,10 +37,16 @@ async def test_send_with_valid_request_returns_successful_response(service_envir
     ):
         wire_sdk_dependencies()
         controller = MockEndpointController()
-        controller.request.prepare({"key": "value"})
+        controller.request.prepare(
+            {
+                "key": "test_key",
+                "value": "test_value",
+            }
+        )
         response = await controller.request.send()
-
-        assert isinstance(response, MockResponseModel)
+        assert "Mock POST request data" in caplog.text
+        assert response["key"] == "test_key"
+        assert response["value"] == "test_value"
 
 
 @pytest.mark.asyncio
@@ -54,8 +60,7 @@ async def test_send_with_invalid_request_returns_null_response(service_environme
         wire_sdk_dependencies()
         controller = MockEndpointController()
         response = await controller.request.send()
-
-        assert isinstance(response, MockResponseModel)
+        assert response == MockResponseModel.null().model_dump()
 
 
 def test_controller_with_custom_operations() -> None:
@@ -114,7 +119,7 @@ async def test_using_controller_to_send_request(
     ):
         random_key = random_string()
         random_value = random_string()
-        initial_data: dict[str, str] = {"key": random_key, "value": random_value}
+        initial_data = {"key": random_key, "value": random_value}
         with mock_api_injected_into_services_wiring(MockAIAPIService):
             wire_sdk_dependencies()
             controller = EndpointControllerWithCustomOperations()
@@ -125,9 +130,8 @@ async def test_using_controller_to_send_request(
             response: MockResponseModel = await controller.request.send()
 
             # Check the contents of the response
-            assert isinstance(response, MockResponseModel)
-            assert response.key == initial_data["key"]
-            assert response.value == initial_data["value"].upper()
+            assert response["key"] == initial_data["key"]
+            assert response["value"] == initial_data["value"].upper()
 
             # Check the request state after sending
             assert controller.request.pending is None

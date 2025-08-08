@@ -1,7 +1,7 @@
 from typing import Literal
 
 from nexosapi.domain.base import NullableBaseModel
-from nexosapi.domain.metadata import Annotation, FunctionCall, LogProbsInfo, ToolCall
+from nexosapi.domain.metadata import Annotation, LogProbsInfo, ToolCall
 
 
 class Audio(NullableBaseModel):
@@ -16,9 +16,9 @@ class ChatMessage(NullableBaseModel):
     refusal: str | None = None
     tool_calls: list[ToolCall] | None = None
     content: str | None = None
-    function_call: FunctionCall | None = None
     audio: Audio | None = None
     annotations: list[Annotation] | None = None
+    name: str | None = None
 
 
 class PredictionType(NullableBaseModel):

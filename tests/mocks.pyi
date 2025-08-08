@@ -7,6 +7,7 @@ from nexosapi.config.settings.services import NexosAIAPIConfiguration as NexosAI
 from nexosapi.domain.requests import NexosAPIRequest
 from nexosapi.domain.responses import NexosAPIResponse
 from nexosapi.services.http import NexosAIAPIService
+from nexosapi.domain.metadata import ModelData
 
 class MockRequestModel(NexosAPIRequest):
     """For testing purposes."""
@@ -37,22 +38,26 @@ class MockEndpointController(NexosAIAPIEndpointController):
     request_model = MockRequestModel
     response_model = MockResponseModel
 
-class EndpointControllerWithCustomOperations(MockEndpointController):
+class EndpointControllerWithCustomOperations(NexosAIAPIEndpointController):
+    endpoint: typing.ClassVar[str]
+    request_model = MockRequestModel
+    response_model = MockResponseModel
+
     class RequestManager(EndpointControllerWithCustomOperations._RequestManager):
         @staticmethod
-        def with_uppercase_value() -> MockRequestModel:
+        def with_uppercase_value() -> EndpointControllerWithCustomOperations.RequestManager:
             """Converts the value field of the request to uppercase.
 
             :return: The modified request model with the value field in uppercase."""
 
         @staticmethod
-        def with_switched_field_values() -> MockRequestModel:
+        def with_switched_field_values() -> EndpointControllerWithCustomOperations.RequestManager:
             """Switches the values of the key and value fields in the request model.
 
             :return: The modified request model with key and value fields switched."""
 
         @staticmethod
-        def with_hardcoded_value(value: str) -> MockRequestModel:
+        def with_hardcoded_value(value: str) -> EndpointControllerWithCustomOperations.RequestManager:
             """Sets the value field of the request to a hardcoded value.
 
             :param value: The hardcoded value to set in the request model.
@@ -72,24 +77,38 @@ class EndpointControllerWithCustomOperations(MockEndpointController):
             :param endpoint: The endpoint string in the format "verb: /path".
             :return: The path (e.g., "/path")."""
 
-        def prepare(self, data: dict) -> "RequestManager":
+        def prepare(self, data: MockRequestModelData) -> EndpointControllerWithCustomOperations.RequestManager:
             """
             Prepare the request data by initializing the pending request.
 
             :param data: The data to be included in the request.
             :return: The current instance of the RequestManager for method chaining."""
 
-        def dump(self) -> dict[str, typing.Any]:
+        def dump(self) -> MockRequestModelData:
             """
             Show the current pending request data.
 
             :return: The pending request data or None if not set."""
 
-        def send(self) -> typing.Any:
+        def send(self) -> MockResponseModelData:
             """
             Call the endpoint with the provided request data.
 
             :return: The response data from the endpoint."""
 
+        def reload_last(self) -> EndpointControllerWithCustomOperations.RequestManager:
+            """
+            Reload the last request to reuse it for the next operation.
+
+            :return: The current instance of the RequestManager for method chaining."""
+
     _RequestManager = RequestManager
     request = RequestManager()
+
+class MockRequestModelData(typing.TypedDict):
+    key: str
+    value: str
+
+class MockResponseModelData(typing.TypedDict):
+    key: str
+    value: str

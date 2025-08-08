@@ -1,5 +1,6 @@
 import asyncio
 import dataclasses
+import logging
 import typing
 from collections.abc import Callable
 from urllib.parse import urljoin
@@ -36,12 +37,11 @@ class NexosAIAPIService:
         :return: The HTTP response.
         """
         full_url = url if override_base else f"{self.base_url}/{url.lstrip('/')}"
+        logging.debug(f"[API] Requesting {verb} {full_url} with params: {kwargs.get('json', {})}")
         async with self.client() as spawned_client:
-            response = await spawned_client.request(
+            return await spawned_client.request(
                 method=verb, url=full_url, follow_redirects=self.follow_redirects, **kwargs
             )
-            response.raise_for_status()
-            return response
 
     def initialize(self, config: NexosAIAPIConfiguration) -> None:
         self.follow_redirects = config.follow_redirects

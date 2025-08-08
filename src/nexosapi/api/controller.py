@@ -14,7 +14,6 @@ from mypy.metastore import random_string
 
 from nexosapi.common.exceptions import InvalidControllerEndpointError
 from nexosapi.config.setup import ServiceName
-from nexosapi.domain.base import NullableBaseModel
 from nexosapi.domain.requests import NexosAPIRequest
 from nexosapi.domain.responses import NexosAPIResponse
 from nexosapi.services.http import NexosAIAPIService
@@ -61,6 +60,7 @@ class NexosAIAPIEndpointController[EndpointRequestType, EndpointResponseType]:
         controller: NexosAIAPIEndpointController = dataclasses.field()
         pending: dict[str, typing.Any] | None = dataclasses.field(init=False, default=None)
         _last_response: EndpointResponseType | None = dataclasses.field(init=False, default=None)
+        _last_request: dict[str, typing.Any] | None = dataclasses.field(init=False, default=None)
         __salt: str = dataclasses.field(init=False, default=random_string())
 
         def __post_init__(self) -> None:
@@ -93,7 +93,9 @@ class NexosAIAPIEndpointController[EndpointRequestType, EndpointResponseType]:
             """
             return endpoint.split(":", 1)[1].strip()
 
-        def prepare(self, data: dict[str, typing.Any]) -> NexosAIAPIEndpointController._RequestManager:  # type: ignore
+        def prepare(
+            self, data: typing.Annotated[dict[str, typing.Any], "model:EndpointRequestType"]
+        ) -> NexosAIAPIEndpointController._RequestManager:  # type: ignore
             """
             Prepare the request data by initializing the pending request.
 
@@ -106,24 +108,32 @@ class NexosAIAPIEndpointController[EndpointRequestType, EndpointResponseType]:
                     self.pending = validated_data.model_dump(exclude_none=True)
             except pydantic.ValidationError as incorrect_data:
                 logging.info(f"[SDK] Validation error in {self.controller.__class__.__name__}: {incorrect_data}")
+                self._last_request = self.pending
                 self.pending = None
             else:
                 return self
 
-        def dump(self) -> dict[str, typing.Any]:
+        def dump(self) -> typing.Annotated[dict[str, typing.Any], "model:EndpointRequestType"]:
             """
             Show the current pending request data.
 
             :return: The pending request data or None if not set.
             """
-            return self.pending if self.pending else {}
+            return (
+                json.loads(
+                    json.dumps(self.pending), parse_int=lambda x: x, parse_constant=lambda x: x, parse_float=lambda x: x
+                )
+                if self.pending
+                else {}
+            )
 
-        async def send(self) -> EndpointResponseType | NullableBaseModel:
+        async def send(self) -> typing.Annotated[dict[str, typing.Any], "model:EndpointResponseType"]:
             """
             Call the endpoint with the provided request data.
 
             :return: The response data from the endpoint.
             """
+            logging.debug(f"[SDK] Sending request to {self.endpoint} with data: {self.pending}")
             verb = self.get_verb_from_endpoint(self.endpoint)
             if verb not in ("POST", "PUT", "PATCH"):
                 logging.error(f"[SDK] Invalid verb requested: {verb}")
@@ -132,20 +142,29 @@ class NexosAIAPIEndpointController[EndpointRequestType, EndpointResponseType]:
             response: httpx.Response = await self.controller.api_service.request(
                 verb=verb,
                 url=self.get_path_from_endpoint(self.endpoint),
-                **{
-                    "json": json.dumps(self.pending)  # type: ignore
-                }
-                if verb in ("POST", "PUT", "PATCH")
-                else {},
+                **{"json": json.loads(json.dumps(self.pending))} if verb in ("POST", "PUT", "PATCH") else {},
             )
             if response.is_error:
-                self.controller.on_error(response)
-                return self.controller.response_model.null()
-            structured_response = self.controller.response_model(**response.json())
+                logging.error(f"[SDK] Error: {response.content.decode(encoding='utf-8')}")
+                await self.controller.on_error(response)
+                return self.controller.response_model.null().model_dump(exclude_none=True)
+
+            self._last_response = response.json()
+            structured_response = self.controller.response_model(**self._last_response)
             structured_response._response = response
-            self._last_response = structured_response
+            self._last_request = self.pending
             self.pending = None
-            return self.controller.on_response(structured_response)
+            return (await self.controller.on_response(structured_response)).model_dump(exclude_none=True)
+
+        def reload_last(self) -> NexosAIAPIEndpointController._RequestManager:
+            """
+            Reload the last request to reuse it for the next operation.
+
+            :return: The current instance of the RequestManager for method chaining.
+            """
+            if self._last_request is not None:
+                self.pending = self._last_request
+            return self
 
         def __getattr__(self, target: str) -> typing.Any:
             """
@@ -163,7 +182,7 @@ class NexosAIAPIEndpointController[EndpointRequestType, EndpointResponseType]:
             if target == "controller":
                 # If the target is 'controller', return the controller instance
                 return self.controller
-            if target == ("pending", "_last_response"):
+            if target == ("pending", "_last_response", "_last_request", "reload_last"):
                 # If the target is 'pending' or '_last_response', return the respective attribute
                 return getattr(self, target)
 
@@ -233,7 +252,7 @@ class NexosAIAPIEndpointController[EndpointRequestType, EndpointResponseType]:
         )
 
     # noinspection PyMethodMayBeStatic
-    def on_response(self, response: EndpointResponseType) -> EndpointResponseType:
+    async def on_response(self, response: EndpointResponseType) -> EndpointResponseType:
         """
         Hook for processing the response before returning it.
         Can be overridden in subclasses to add custom response handling.
@@ -243,7 +262,7 @@ class NexosAIAPIEndpointController[EndpointRequestType, EndpointResponseType]:
         """
         return response
 
-    def on_error(self, response: httpx.Response) -> EndpointResponseType:
+    async def on_error(self, response: httpx.Response) -> EndpointResponseType:
         """
         Hook for handling errors that occur during the request.
         Can be overridden in subclasses to add custom error handling.

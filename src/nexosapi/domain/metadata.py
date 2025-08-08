@@ -57,19 +57,17 @@ class ToolCall(NullableBaseModel):
     function: FunctionCall
 
 
-class ToolDefinition(typing.TypedDict, total=False):
+class FunctionToolDefinition(typing.TypedDict, total=False):
     """
-    Represents a web search tool definition for use in chat completions.
+    Represents a function tool definition for use in chat completions.
 
-    :ivar name: The name of the web search tool.
-    :ivar query: The search query to be used with the web search tool.
-    :ivar description: A description of the web search tool, if any.
-    :ivar parameters: Additional parameters for the web search tool, if any.
+    :ivar name: The name of the tool.
+    :ivar description: A description of the tool, if any.
+    :ivar parameters: Additional parameters for the tool, if any.
     :ivar strict: Whether the tool should be used strictly or not.
     """
 
     name: str
-    query: str
     description: str | None
     parameters: dict[str, typing.Any] | None
     strict: bool | None
@@ -175,9 +173,9 @@ class WebSearchToolMCP(NullableBaseModel):
 
 
 class WebSearchToolOptions(NullableBaseModel):
-    mcp: WebSearchToolMCP
     search_context_size: typing.Literal["low", "medium", "high"] | None = None
     user_location: WebSearchUserLocation | None = None
+    mcp: WebSearchToolMCP | None = None
 
     def model_dump(  # noqa: PLR0913
         self,
@@ -209,27 +207,34 @@ class WebSearchToolOptions(NullableBaseModel):
             fallback=fallback,
             serialize_as_any=serialize_as_any,
         )
-        mcp = data["mcp"]
+        mcp = data.get("mcp")
         return {
             **({"search_context_size": data["search_context_size"]} if "search_context_size" in data else {}),
             **({"user_location": data["user_location"]} if "user_location" in data else {}),
-            "mcp": {
-                "type": mcp["type"],
-                "options": {
-                    "tool": mcp["tool"],
-                    **({"query": mcp["query"]} if "query" in mcp else {}),
-                    **({"url": mcp["url"]} if "url" in mcp else {}),
-                    **({"geo_location": mcp["geo_location"]} if "geo_location" in mcp else {}),
-                    **({"parse": mcp["parse"]} if "parse" in mcp else {}),
-                },
-            },
+            **(
+                {
+                    "mcp": {
+                        "type": mcp["type"],
+                        "options": {
+                            "tool": mcp["tool"],
+                            **({"query": mcp["query"]} if "query" in mcp else {}),
+                            **({"url": mcp["url"]} if "url" in mcp else {}),
+                            **({"geo_location": mcp["geo_location"]} if "geo_location" in mcp else {}),
+                            **({"parse": mcp["parse"]} if "parse" in mcp else {}),
+                        },
+                    }
+                }
+                if mcp
+                else {}
+            ),
         }
 
 
 class RAGToolOptions(NullableBaseModel):
+    collection_uuid: str
+    query: str | None = None
     threshold: float | None = None
     top_n: int | None = None
-    collection_uuid: str
     model_uuid: str | None = None
 
 

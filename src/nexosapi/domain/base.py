@@ -31,8 +31,6 @@ class NullableBaseModel(BaseModel):
         :param field: The type of the field.
         :return: A tuple containing the field name and its type.
         """
-        logging.debug(f"Constructing {field} in class {cls.__name__}")
-
         if hasattr(field, "null"):
             return field.null
 

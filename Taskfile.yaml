@@ -69,6 +69,7 @@ tasks:
     desc: Run tests
     env:
       TESTCONTAINERS_HOST_OVERRIDE: "127.0.0.1"
+      NEXOSAI_INIT__DISABLE_AUTOWIRING: "true"
     cmds:
       - "{{.TEST_BASE_COMMAND}}"
 
@@ -76,6 +77,7 @@ tasks:
     desc: Run tests marked as "chosen"
     env:
       TESTCONTAINERS_HOST_OVERRIDE: "127.0.0.1"
+      NEXOSAI_INIT__DISABLE_AUTOWIRING: "true"
     cmds:
       - "{{.TEST_BASE_COMMAND}} -m 'chosen'"
 
@@ -83,6 +85,7 @@ tasks:
     desc: Run tests that can be run offline
     env:
       TESTCONTAINERS_HOST_OVERRIDE: "127.0.0.1"
+      NEXOSAI_INIT__DISABLE_AUTOWIRING: "true"
     cmds:
       - "{{.TEST_BASE_COMMAND}} -m 'offline'"
 

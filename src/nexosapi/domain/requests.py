@@ -17,7 +17,7 @@ class NexosAPIRequest(BaseModel):
 
 class ChatCompletionsRequest(NexosAPIRequest):
     model: str
-    messages: list[ChatMessage]
+    messages: list[ChatMessage] = pydantic.Field(min_length=1)
     store: bool | None = None
     metadata: dict[str, str] | None = None
     frequency_penalty: float = 0.0
@@ -39,8 +39,8 @@ class ChatCompletionsRequest(NexosAPIRequest):
     temperature: float = 1.0
     top_p: float = 1.0
     tools: list[dict[str, typing.Any]] | None = None
-    tool_choice: str | dict[str, typing.Any] = "none"
-    parallel_tool_calls: bool = True
+    tool_choice: str | dict[str, typing.Any] | None = None
+    parallel_tool_calls: bool | None = None
     thinking: ChatThinkingModeConfiguration | None = None
 
 

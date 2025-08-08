@@ -2,11 +2,13 @@ import ast
 import dataclasses
 import inspect
 import logging
+import textwrap
 import typing
-from ast import get_docstring
 from pathlib import Path
 
 from nexosapi.api.controller import EndpointResponseType, NexosAIAPIEndpointController
+
+from .base import StubTransformer
 
 
 class ControllerDataModelsDict(typing.TypedDict):
@@ -15,24 +17,85 @@ class ControllerDataModelsDict(typing.TypedDict):
 
 
 @dataclasses.dataclass
-class RequestMakerRewriter(ast.NodeTransformer):
-    exclude_classes: set[str] = dataclasses.field()
-    modified: bool = False
-    _generics: dict[str, ControllerDataModelsDict] = dataclasses.field(default_factory=dict)
+class RequestMakerRewriter(StubTransformer):
+    _generics: typing.ClassVar[dict[str, ControllerDataModelsDict]] = {}
+    _current_controller_class: typing.ClassVar[str] = ""
+    exclude_classes: set[str] = dataclasses.field(default_factory=set)
+
+    def run_rewrites(self, **kwargs: typing.Any) -> None:
+        exclude_classes = kwargs.get("exclude_classes")
+        additional_imports = kwargs.get("additional_imports", [])
+        stub_path = kwargs.get("stub_path")
+
+        if any(
+            [
+                not isinstance(exclude_classes, (list, set)),
+                not isinstance(additional_imports, (list, set)),
+                not isinstance(stub_path, str),
+            ]
+        ):
+            raise TypeError("Invalid types for exclude_classes, additional_imports, or stub_path.")
+
+        self.exclude_classes = set(exclude_classes or [])
+        path = Path(stub_path)  # type: ignore
+        if not path.exists():
+            return
+
+        content = path.read_text()
+        try:
+            tree = ast.parse(content)
+        except SyntaxError as syntax_error_during_compilation:
+            logging.exception(f"Failed to parse {stub_path}", exc_info=syntax_error_during_compilation)
+            return
+
+        transformed_tree = self.visit(tree)
+        ast.fix_missing_locations(transformed_tree)
+
+        new_code = ast.unparse(transformed_tree)
+        if self.modified:
+            new_code = (
+                "\n".join(additional_imports or ["from __future__ import annotations", "import typing"])
+                + "\n"
+                + new_code
+            )
+            path.write_text(new_code, encoding="utf-8")
+            logging.info(f"Rewrites applied to {stub_path}.")
 
     @staticmethod
-    def _indent_docstring(docstring: str) -> str:
-        """
-        Indents the docstring to match the indentation level of the method.
+    def get_method_ast_node(class_node, method_name):
+        try:
+            source = inspect.getsource(class_node)
+        except Exception as e:
+            logging.exception(f"Could not get source for class {class_node}", exc_info=e)
+            return None
 
-        :param docstring: The original docstring to be indented.
-        :return: The indented docstring.
-        """
-        if not docstring:
-            return ""
-        lines = docstring.splitlines()
-        indented_lines = [lines[0]] + [12 * " " + line for line in lines[1:]]
-        return "\n".join(indented_lines)
+        source = textwrap.dedent(source)
+        try:
+            tree = ast.parse(source)
+        except SyntaxError as e:
+            logging.exception(f"Syntax error parsing source for class {class_node}", exc_info=e)
+            return None
+
+        class_node = next(
+            (node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == class_node.__name__), None
+        )
+        if class_node is None:
+            logging.error(f"Class {class_node.__name__} node not found in source")
+            return None
+
+        func_def = next(
+            (
+                node
+                for node in class_node.body
+                if (isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))) and node.name == method_name
+            ),
+            None,
+        )
+        if func_def is None:
+            logging.error(f"Method {method_name} not found in class {class_node.__name__}")
+            return None
+
+        return func_def
 
     def add_original_request_manager_body(
         self, body: list[ast.stmt], data_models: dict[str, ControllerDataModelsDict] | None
@@ -56,25 +119,24 @@ class RequestMakerRewriter(ast.NodeTransformer):
 
             if callable(getattr(original_request_maker, method_name, None)):
                 original_method = getattr(original_request_maker, method_name)
-                logging.info(f"[TYPES] Adding method {method_name} from {original_method.__qualname__}")
-                arguments_spec = inspect.getfullargspec(original_method)
-                docstring = self._indent_docstring(original_method.__doc__)
-                variable_type_hints = typing.get_type_hints(original_method)
-                compiled_arguments = []
+                logging.info(f"Adding method {method_name} from {original_request_maker.__name__}")
+                variable_type_hints = typing.get_type_hints(original_method, include_extras=True)
+                docstring = self._indent_docstring(original_method.__doc__, indent=12)
 
-                arguments_to_analyze = (
-                    arguments_spec.args[1:]
-                    if arguments_spec.args and arguments_spec.args[0] == "self"
-                    else arguments_spec.args
+                func_def = self.get_method_ast_node(original_request_maker, method_name)
+                if func_def is None:
+                    logging.warning(f"Skipping method {method_name}, AST node not found.")
+                    continue
+
+                args_to_process = (
+                    func_def.args.args[1:]
+                    if func_def.args.args and func_def.args.args[0].arg == "self"
+                    else func_def.args.args
                 )
-                for argument in arguments_to_analyze:
-                    annotation = variable_type_hints.get(argument, None)
-                    compiled_arguments.append(
-                        ast.arg(
-                            arg=argument,
-                            annotation=ast.Name(id=annotation.__name__, ctx=ast.Load()) if annotation else None,
-                        )
-                    )
+
+                compiled_arguments: list[ast.arg] = [
+                    ast.arg(arg=arg_node.arg, annotation=arg_node.annotation) for arg_node in args_to_process
+                ]
 
                 return_annotation = variable_type_hints.get("return", None)
                 if type(return_annotation) in [typing._GenericAlias, typing.Union, typing._UnionGenericAlias]:  # type: ignore
@@ -92,7 +154,9 @@ class RequestMakerRewriter(ast.NodeTransformer):
                     return_annotation.__name__ if isinstance(return_annotation, type) else str(return_annotation)
                 )
                 if serialized_return_annotation == "_RequestManager":
-                    serialized_return_annotation = f'"{serialized_return_annotation.removeprefix("_")}"'
+                    serialized_return_annotation = (
+                        f"{self._current_controller_class}.{serialized_return_annotation.removeprefix('_')}"
+                    )
                 returned_objects = (
                     {"returns": ast.Name(id=serialized_return_annotation, ctx=ast.Load())} if return_annotation else {}
                 )
@@ -129,11 +193,13 @@ class RequestMakerRewriter(ast.NodeTransformer):
                 stmt.args.args = new_args
                 if hasattr(stmt, "__doc__") and stmt.__doc__:
                     # Remove :param definition for 'request' in the docstring
-                    docstring_lines = (get_docstring(stmt) or "").splitlines()
+                    docstring_lines = (ast.get_docstring(stmt) or "").splitlines()
                     new_docstring_content = "\n".join(line for line in docstring_lines if ":param request:" not in line)
-                    new_docstring = self._indent_docstring(new_docstring_content)
+                    new_docstring = self._indent_docstring(new_docstring_content, indent=12)
                     new_docstring_expr = ast.Expr(value=ast.Constant(value=new_docstring))
                     stmt.body[0] = new_docstring_expr
+                # Change the method return type to the following type hint: "RequestManager"
+                stmt.returns = ast.Name(id=f"{self._current_controller_class}.RequestManager", ctx=ast.Load())
                 new_body.append(stmt)
             else:
                 new_body.append(stmt)
@@ -151,6 +217,8 @@ class RequestMakerRewriter(ast.NodeTransformer):
 
         if node.name in self.exclude_classes:
             return node
+
+        self._current_controller_class = node.name
 
         # Find and remove inner class Operations
         new_request_maker_body = []
@@ -210,32 +278,3 @@ class RequestMakerRewriter(ast.NodeTransformer):
 
         node.body = new_endpoint_controller_body
         return node
-
-
-def apply_rewrites_to_stub(stub_path: str, exclude_classes: list[str]) -> None:
-    """
-    Applies AST-based rewrite to replace Operations class with RequestMaker class in controllers.
-
-    :param stub_path: Path to the Python stub file.
-    :param exclude_classes: List of class names to exclude from rewriting.
-    """
-    path = Path(stub_path)
-    if not path.exists():
-        return
-
-    content = path.read_text()
-    try:
-        tree = ast.parse(content)
-    except SyntaxError as syntax_error_during_compilation:
-        logging.exception(f"Failed to parse {stub_path}", exc_info=syntax_error_during_compilation)
-        return
-
-    transformer = RequestMakerRewriter(set(exclude_classes))
-    transformed_tree = transformer.visit(tree)
-    ast.fix_missing_locations(transformed_tree)
-
-    if transformer.modified:
-        additional_imports = ["from __future__ import annotations", "import typing"]
-        new_code = "\n".join(additional_imports) + "\n" + ast.unparse(transformed_tree)
-        path.write_text(new_code, encoding="utf-8")
-        logging.info(f"Rewrites applied to {stub_path}.")

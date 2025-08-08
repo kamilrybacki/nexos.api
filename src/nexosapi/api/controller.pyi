@@ -1,10 +1,11 @@
+from __future__ import annotations
+import typing
 import dataclasses
 import httpx
 import typing
 from mypy.metastore import random_string
 from nexosapi.common.exceptions import InvalidControllerEndpointError as InvalidControllerEndpointError
 from nexosapi.config.setup import ServiceName as ServiceName
-from nexosapi.domain.base import NullableBaseModel as NullableBaseModel
 from nexosapi.domain.requests import NexosAPIRequest as NexosAPIRequest
 from nexosapi.domain.responses import NexosAPIResponse as NexosAPIResponse
 from nexosapi.services.http import NexosAIAPIService as NexosAIAPIService
@@ -24,6 +25,7 @@ class NexosAIAPIEndpointController[EndpointRequestType, EndpointResponseType]:
     response_model: EndpointResponseType = dataclasses.field(init=False)
     VALID_ENDPOINT_REGEX: typing.ClassVar[str] = ...
     api_service: NexosAIAPIService = ...
+
     class Operations:
         """
         Enum to define operations for the NexosAIEndpointController.
@@ -31,6 +33,7 @@ class NexosAIAPIEndpointController[EndpointRequestType, EndpointResponseType]:
         """
 
     operations: Operations
+
     @dataclasses.dataclass
     class _RequestManager:
         """
@@ -47,14 +50,17 @@ class NexosAIAPIEndpointController[EndpointRequestType, EndpointResponseType]:
         controller: NexosAIAPIEndpointController = dataclasses.field()
         pending: dict[str, typing.Any] | None = dataclasses.field(init=False, default=None)
         _last_response: EndpointResponseType | None = dataclasses.field(init=False, default=None)
+        _last_request: dict[str, typing.Any] | None = dataclasses.field(init=False, default=None)
         __salt: str = dataclasses.field(init=False, default=random_string())
         _endpoint = ...
+
         def __post_init__(self) -> None:
             """
             Post-initialization method to set the endpoint for the request manager.
             This method is called after the instance is created to ensure that the endpoint
             is set correctly based on the controller's endpoint.
             """
+
         @staticmethod
         def get_verb_from_endpoint(endpoint: str) -> str:
             """
@@ -63,6 +69,7 @@ class NexosAIAPIEndpointController[EndpointRequestType, EndpointResponseType]:
             :param endpoint: The endpoint string in the format "verb: /path".
             :return: The HTTP verb (e.g., "GET", "POST").
             """
+
         @staticmethod
         def get_path_from_endpoint(endpoint: str) -> str:
             """
@@ -71,25 +78,38 @@ class NexosAIAPIEndpointController[EndpointRequestType, EndpointResponseType]:
             :param endpoint: The endpoint string in the format "verb: /path".
             :return: The path (e.g., "/path").
             """
-        def prepare(self, data: dict[str, typing.Any]) -> NexosAIAPIEndpointController._RequestManager:
+
+        def prepare(
+            self, data: typing.Annotated[dict[str, typing.Any], "model:EndpointRequestType"]
+        ) -> NexosAIAPIEndpointController._RequestManager:
             """
             Prepare the request data by initializing the pending request.
 
             :param data: The data to be included in the request.
             :return: The current instance of the RequestManager for method chaining.
             """
-        def dump(self) -> dict[str, typing.Any]:
+
+        def dump(self) -> typing.Annotated[dict[str, typing.Any], "model:EndpointRequestType"]:
             """
             Show the current pending request data.
 
             :return: The pending request data or None if not set.
             """
-        async def send(self) -> EndpointResponseType | NullableBaseModel:
+
+        async def send(self) -> typing.Annotated[dict[str, typing.Any], "model:EndpointResponseType"]:
             """
             Call the endpoint with the provided request data.
 
             :return: The response data from the endpoint.
             """
+
+        def reload_last(self) -> NexosAIAPIEndpointController._RequestManager:
+            """
+            Reload the last request to reuse it for the next operation.
+
+            :return: The current instance of the RequestManager for method chaining.
+            """
+
         def __getattr__(self, target: str) -> typing.Any:
             """
             Redirect any getattr calls to the operations defined
@@ -98,6 +118,7 @@ class NexosAIAPIEndpointController[EndpointRequestType, EndpointResponseType]:
 
     REQUEST_MANAGER_CLASS: type
     request: REQUEST_MANAGER_CLASS
+
     @classmethod
     def validate_endpoint(cls, endpoint: str) -> None:
         """
@@ -106,6 +127,7 @@ class NexosAIAPIEndpointController[EndpointRequestType, EndpointResponseType]:
 
         :param endpoint: The API endpoint to validate.
         """
+
     @classmethod
     def __init_subclass__(cls, **kwargs: typing.Any) -> None: ...
     def __post_init__(self) -> None:
@@ -113,7 +135,8 @@ class NexosAIAPIEndpointController[EndpointRequestType, EndpointResponseType]:
         Post-initialization method to validate the endpoint format.
         Raises ValueError if the endpoint does not match the expected format.
         """
-    def on_response(self, response: EndpointResponseType) -> EndpointResponseType:
+
+    async def on_response(self, response: EndpointResponseType) -> EndpointResponseType:
         """
         Hook for processing the response before returning it.
         Can be overridden in subclasses to add custom response handling.
@@ -121,7 +144,8 @@ class NexosAIAPIEndpointController[EndpointRequestType, EndpointResponseType]:
         :param response: The response object to process.
         :return: The processed response object.
         """
-    def on_error(self, response: httpx.Response) -> EndpointResponseType:
+
+    async def on_error(self, response: httpx.Response) -> EndpointResponseType:
         """
         Hook for handling errors that occur during the request.
         Can be overridden in subclasses to add custom error handling.
@@ -129,5 +153,6 @@ class NexosAIAPIEndpointController[EndpointRequestType, EndpointResponseType]:
         :param response: The HTTP response object which contains the error.
         :return: A null response object or a custom error response.
         """
+
     def __init__(self, api_service=...) -> None: ...
     def __replace__(self, *, api_service=...) -> None: ...

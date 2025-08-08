@@ -64,7 +64,11 @@ class MockEndpointController(NexosAIAPIEndpointController):
     response_model = MockResponseModel
 
 
-class EndpointControllerWithCustomOperations(MockEndpointController):
+class EndpointControllerWithCustomOperations(NexosAIAPIEndpointController):
+    endpoint: typing.ClassVar[str] = MOCK_ENDPOINT_PATH
+    request_model = MockRequestModel
+    response_model = MockResponseModel
+
     class Operations:
         @staticmethod
         def with_uppercase_value(request: MockRequestModel) -> MockRequestModel:
