@@ -1,5 +1,4 @@
 from __future__ import annotations
-import typing
 import httpx
 import typing
 from nexosapi.api.controller import NexosAIAPIEndpointController
@@ -7,7 +6,6 @@ from nexosapi.config.settings.services import NexosAIAPIConfiguration as NexosAI
 from nexosapi.domain.requests import NexosAPIRequest
 from nexosapi.domain.responses import NexosAPIResponse
 from nexosapi.services.http import NexosAIAPIService
-from nexosapi.domain.metadata import ModelData
 
 class MockRequestModel(NexosAPIRequest):
     """For testing purposes."""
@@ -77,20 +75,22 @@ class EndpointControllerWithCustomOperations(NexosAIAPIEndpointController):
             :param endpoint: The endpoint string in the format "verb: /path".
             :return: The path (e.g., "/path")."""
 
-        def prepare(self, data: MockRequestModelData) -> EndpointControllerWithCustomOperations.RequestManager:
+        def prepare(
+            self, data: MockRequestModel | dict[str, typing.Any]
+        ) -> EndpointControllerWithCustomOperations.RequestManager:
             """
             Prepare the request data by initializing the pending request.
 
             :param data: The data to be included in the request.
             :return: The current instance of the RequestManager for method chaining."""
 
-        def dump(self) -> MockRequestModelData:
+        def dump(self) -> dict[str, typing.Any]:
             """
             Show the current pending request data.
 
             :return: The pending request data or None if not set."""
 
-        def send(self) -> MockResponseModelData:
+        async def send(self) -> MockResponseModel:
             """
             Call the endpoint with the provided request data.
 
@@ -102,13 +102,4 @@ class EndpointControllerWithCustomOperations(NexosAIAPIEndpointController):
 
             :return: The current instance of the RequestManager for method chaining."""
 
-    _RequestManager = RequestManager
-    request = RequestManager()
-
-class MockRequestModelData(typing.TypedDict):
-    key: str
-    value: str
-
-class MockResponseModelData(typing.TypedDict):
-    key: str
-    value: str
+    request: EndpointControllerWithCustomOperations.RequestManager

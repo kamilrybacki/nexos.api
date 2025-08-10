@@ -43,14 +43,14 @@ async def test_send_with_valid_request_returns_successful_response(service_envir
                 "value": "test_value",
             }
         )
-        response = await controller.request.send()
+        response = (await controller.request.send()).model_dump()
         assert "Mock POST request data" in caplog.text
         assert response["key"] == "test_key"
         assert response["value"] == "test_value"
 
 
 @pytest.mark.asyncio
-async def test_send_with_invalid_request_returns_null_response(service_environment):
+async def test_send_with_invalid_request_returns_null_response(service_environment, caplog):
     with (
         mock_api_injected_into_services_wiring(MockAIAPIService),
         service_environment(
@@ -59,8 +59,9 @@ async def test_send_with_invalid_request_returns_null_response(service_environme
     ):
         wire_sdk_dependencies()
         controller = MockEndpointController()
-        response = await controller.request.send()
+        response = (await controller.request.send()).model_dump()
         assert response == MockResponseModel.null().model_dump()
+        assert "No pending request" in caplog.text
 
 
 def test_controller_with_custom_operations() -> None:
@@ -73,22 +74,25 @@ def test_controller_with_custom_operations() -> None:
     mock_response_data = {"key": random_key, "value": random_value}
     controller.request.prepare(mock_response_data)
 
-    assert controller.request.pending == mock_response_data
+    assert controller.request.pending.model_dump() == mock_response_data
 
     controller.request.with_uppercase_value()
-    assert controller.request.pending["value"] == mock_response_data["value"].upper()
+    assert controller.request.pending.value == mock_response_data["value"].upper()
 
     latest_request_data = controller.request.pending
     controller.request.with_switched_field_values()
-    assert controller.request.pending == {"key": latest_request_data["value"], "value": latest_request_data["key"]}
+    assert controller.request.pending.model_dump() == {
+        "key": latest_request_data["value"],
+        "value": latest_request_data["key"],
+    }
 
     hardcoded_value = MockResponseModel.__doc__.lower()
     controller.request.with_hardcoded_value(hardcoded_value)
-    assert controller.request.pending["value"] == hardcoded_value
+    assert controller.request.pending.value == hardcoded_value
 
     hardcoded_value = MockResponseModel.__doc__.upper()
     controller.request.with_hardcoded_value(value=hardcoded_value)
-    assert controller.request.pending["value"] == hardcoded_value
+    assert controller.request.pending.value == hardcoded_value
 
 
 def test_chaining_operations_in_controller() -> None:
@@ -106,8 +110,8 @@ def test_chaining_operations_in_controller() -> None:
         .with_uppercase_value()
         .with_switched_field_values()
     )
-    assert controller.request.pending["key"] == hardcoded_value.upper()
-    assert controller.request.pending["value"] == initial_data["value"].upper()
+    assert controller.request.pending.key == hardcoded_value.upper()
+    assert controller.request.pending.value == initial_data["value"].upper()
 
 
 @pytest.mark.asyncio
@@ -130,8 +134,8 @@ async def test_using_controller_to_send_request(
             response: MockResponseModel = await controller.request.send()
 
             # Check the contents of the response
-            assert response["key"] == initial_data["key"]
-            assert response["value"] == initial_data["value"].upper()
+            assert response.key == initial_data["key"]
+            assert response.value == initial_data["value"].upper()
 
             # Check the request state after sending
             assert controller.request.pending is None

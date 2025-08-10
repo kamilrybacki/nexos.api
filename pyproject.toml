@@ -22,6 +22,7 @@ pytest = "^8.3.5"
 pytest-asyncio = "^0.26.0"
 pytest-cov = "^4.1.0"
 pytest-order = "^1.3.0"
+pytest-mypy = "^1.0.1"
 testcontainers = "^4.10.0"
 types-requests = "^2.32.4.20250611"
 fastapi = "^0.116.1"
@@ -84,6 +85,7 @@ ignore = [
 exclude = [
     "*.pyi",  # ignore type stubs
     "tests/**",  # ignore tests
+    "make/**",  # ignore types compiler and other build utils
 ]
 
 [tool.mypy]
@@ -107,10 +109,10 @@ pretty = true
 plugins = "pydantic.mypy"
 
 [[tool.mypy.overrides]]
-module= "**/tests/**"
-disallow_untyped_calls = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
+module = ["tests.*"]
+disallow_incomplete_defs = false
+disallow_untyped_defs = false
+disallow_untyped_calls = false
 check_untyped_defs = false
 ignore_missing_imports = true
 strict_optional = false

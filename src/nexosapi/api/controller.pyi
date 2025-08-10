@@ -1,5 +1,4 @@
 from __future__ import annotations
-import typing
 import dataclasses
 import httpx
 import typing
@@ -12,9 +11,12 @@ from nexosapi.services.http import NexosAIAPIService as NexosAIAPIService
 
 EndpointRequestType = typing.TypeVar("EndpointRequestType", bound=NexosAPIRequest)
 EndpointResponseType = typing.TypeVar("EndpointResponseType", bound=NexosAPIResponse)
+_EndpointRequestType = typing.TypeVar("_EndpointRequestType", bound=NexosAPIRequest)
+_EndpointResponseType = typing.TypeVar("_EndpointResponseType", bound=NexosAPIResponse)
+CONTROLLERS_REGISTRY: dict[str, NexosAIAPIEndpointController]
 
 @dataclasses.dataclass
-class NexosAIAPIEndpointController[EndpointRequestType, EndpointResponseType]:
+class NexosAIAPIEndpointController(typing.Generic[EndpointRequestType, EndpointResponseType]):
     """
     Abstract base class for NexosAI endpoint controllers.
     This class defines the structure for endpoint controllers in the Nexos AI API.
@@ -35,7 +37,7 @@ class NexosAIAPIEndpointController[EndpointRequestType, EndpointResponseType]:
     operations: Operations
 
     @dataclasses.dataclass
-    class _RequestManager:
+    class _RequestManager(typing.Generic[_EndpointRequestType, _EndpointResponseType]):
         """
         RequestManager is responsible for preparing and sending requests to the API endpoints.
         It handles the request data preparation and manages the lifecycle of the request.
@@ -47,10 +49,10 @@ class NexosAIAPIEndpointController[EndpointRequestType, EndpointResponseType]:
         HAVE TO STATICALLY OVERWRITE THE METHODS OF THE REQUEST MANAGER FOR EACH CONTROLLER IMPLEMENTATION.
         """
 
-        controller: NexosAIAPIEndpointController = dataclasses.field()
-        pending: dict[str, typing.Any] | None = dataclasses.field(init=False, default=None)
-        _last_response: EndpointResponseType | None = dataclasses.field(init=False, default=None)
-        _last_request: dict[str, typing.Any] | None = dataclasses.field(init=False, default=None)
+        controller: NexosAIAPIEndpointController = dataclasses.field(init=False)
+        pending: _EndpointRequestType | None = dataclasses.field(init=False, default=None)
+        _last_response: _EndpointResponseType | None = dataclasses.field(init=False, default=None)
+        _last_request: _EndpointRequestType | None = dataclasses.field(init=False, default=None)
         __salt: str = dataclasses.field(init=False, default=random_string())
         _endpoint = ...
 
@@ -80,7 +82,7 @@ class NexosAIAPIEndpointController[EndpointRequestType, EndpointResponseType]:
             """
 
         def prepare(
-            self, data: typing.Annotated[dict[str, typing.Any], "model:EndpointRequestType"]
+            self, data: _EndpointRequestType | dict[str, typing.Any]
         ) -> NexosAIAPIEndpointController._RequestManager:
             """
             Prepare the request data by initializing the pending request.
@@ -89,14 +91,14 @@ class NexosAIAPIEndpointController[EndpointRequestType, EndpointResponseType]:
             :return: The current instance of the RequestManager for method chaining.
             """
 
-        def dump(self) -> typing.Annotated[dict[str, typing.Any], "model:EndpointRequestType"]:
+        def dump(self) -> dict[str, typing.Any]:
             """
             Show the current pending request data.
 
             :return: The pending request data or None if not set.
             """
 
-        async def send(self) -> typing.Annotated[dict[str, typing.Any], "model:EndpointResponseType"]:
+        async def send(self) -> _EndpointResponseType:
             """
             Call the endpoint with the provided request data.
 
@@ -116,8 +118,7 @@ class NexosAIAPIEndpointController[EndpointRequestType, EndpointResponseType]:
             in the controller class, EXCEPT for the `prepare` and `send` methods.
             """
 
-    REQUEST_MANAGER_CLASS: type
-    request: REQUEST_MANAGER_CLASS
+    request: _RequestManager
 
     @classmethod
     def validate_endpoint(cls, endpoint: str) -> None:

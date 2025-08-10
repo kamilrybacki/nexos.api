@@ -4,7 +4,6 @@ from shutil import rmtree
 
 from compile import compile_initial_stubs
 from rewrites.controllers import RequestMakerRewriter
-from rewrites.models import BindModelTypeTransformer, DomainModelsDictionariesWriter
 
 from nexosapi.common.logging import setup_logging
 
@@ -72,8 +71,7 @@ def remove_stub_if_not_needed(file_path: str) -> bool:
                 Path(file_path.removesuffix(".pyi")).is_dir(),  # Skip directories
                 "__pycache__" in file_path,  # Skip __pycache__ directories
                 "__init__.py" in file_path,  # Skip __init__.py files
-                all([part not in Path(file_path.removesuffix(".pyi")).as_posix() for part in ["/api/", "/domain/"]]),  # noqa: C419
-                "/domain/base.pyi" in file_path,  # Skip base.pyi file for domain models
+                all([part not in Path(file_path.removesuffix(".pyi")).as_posix() for part in ["/api/"]]),  # noqa: C419
             ]
         ):
             logging.debug(f"Removing stub file: {file_path}")
@@ -115,11 +113,6 @@ def try_rewriting_stubs(
         compile_initial_stubs(output_dir=output_dir_as_path)
         stub_files_tree = generate_file_tree_paths_for_directory(output_dir_as_path)
         process_endpoint_controllers(stub_files_tree)
-        writer = DomainModelsDictionariesWriter.apply(
-            domain_models_path=str(output_dir_as_path / "nexosapi" / "domain"), extra_paths=FILES_TO_EXPLICITLY_REWRITE
-        )
-        models_map = writer.build_basemodel_to_typeddict_map()
-        BindModelTypeTransformer.apply(models=models_map, stubs_tree=stub_files_tree)
         include_stubs(output=output_dir_as_path, src=src_dir_as_path, tests=test_dir_as_path)
     except Exception as e:
         logging.exception("An error occurred during stub generation and rewriting.", exc_info=e)

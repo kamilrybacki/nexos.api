@@ -9,16 +9,14 @@ from nexosapi.domain.metadata import (
     ToolChoiceAsDictionary,
     ToolChoiceFunction,
     ToolType,
-    WebSearchToolMCP,
     WebSearchToolOptions,
-    WebSearchUserLocation,
 )
 from nexosapi.domain.requests import ChatCompletionsRequest
 from nexosapi.domain.responses import ChatCompletionsResponse
 
 
 def create_web_search_tool(
-    options: dict[str, typing.Any] | None = None,
+    options: WebSearchToolOptions | None = None,
 ) -> dict[str, typing.Any]:
     """
     Creates a definition for a web search tool.
@@ -26,24 +24,13 @@ def create_web_search_tool(
     :param options: Additional options for the web search tool, if any.
     :return: A dictionary representing the web search tool definition.
     """
-    validated_search_options = None
     if options:
-        context_size = options.get("search_context_size", None)
-        user_location = options.get("user_location", None)
-        validated_search_options = WebSearchToolOptions(
-            search_context_size=context_size,
-            user_location=WebSearchUserLocation(**user_location) if user_location else None,
-            mcp=WebSearchToolMCP(**options.get("mcp", {})) if options.get("mcp") else None,
-        )
-
-    return {
-        "type": str(ToolType.WEB_SEARCH),
-        **({str(ToolType.WEB_SEARCH): validated_search_options.model_dump()} if validated_search_options else {}),
-    }
+        return {"type": str(ToolType.WEB_SEARCH), str(ToolType.WEB_SEARCH): options.model_dump()}
+    return {"type": str(ToolType.WEB_SEARCH)}
 
 
 def create_ocr_tool(
-    options: dict[str, typing.Any],
+    options: OCRToolOptions,
 ) -> dict[str, typing.Any]:
     """
     Creates a definition for an OCR tool.
@@ -51,23 +38,9 @@ def create_ocr_tool(
     :param options: Additional options for the OCR tool, if any.
     :return: A dictionary representing the OCR tool definition.
     """
-    validated_ocr_options = OCRToolOptions(**options)
     return {
         "type": str(ToolType.OCR),
-        str(ToolType.OCR): validated_ocr_options.model_dump(),
-    }
-
-
-def create_rag_tool(options: dict[str, typing.Any]) -> dict[str, typing.Any]:
-    """
-    Creates a definition for a RAG tool.
-    :param options: Additional options for the RAG tool, if any.
-    :return: A dictionary representing the RAG tool definition.
-    """
-    validated_rag_options = RAGToolOptions(**options)
-    return {
-        "type": str(ToolType.RAG),
-        str(ToolType.RAG): {"mcp": validated_rag_options.model_dump()},
+        str(ToolType.OCR): options.model_dump(),
     }
 
 
@@ -91,26 +64,31 @@ class ChatCompletionsEndpointController(NexosAIAPIEndpointController):
 
         @staticmethod
         def with_search_engine_tool(
-            request: ChatCompletionsRequest,
-            options: typing.Annotated[dict[str, typing.Any], "model:WebSearchToolOptions"],
+            request: ChatCompletionsRequest, options: WebSearchToolOptions | dict[str, typing.Any]
         ) -> ChatCompletionsRequest:
             """
             Sets the search engine to be used for the chat completion.
 
             :param request: The request object containing the chat completion parameters.
             :param options: Optional search options to be used with the search engine.
-            :type options: WebSearchToolOptions
             :return: The updated request object with the search engine set.
             """
             if not request.tools:
                 request.tools = []
 
-            request.tools.append(create_web_search_tool(options))
+            if isinstance(options, dict):
+                # If options is a dictionary, convert it to WebSearchToolOptions
+                options = WebSearchToolOptions(**options)
+
+            if options:
+                request.tools.append({"type": str(ToolType.WEB_SEARCH), str(ToolType.WEB_SEARCH): options.model_dump()})
+            else:
+                request.tools.append({"type": str(ToolType.WEB_SEARCH)})
             return request
 
         @staticmethod
         def with_rag_tool(
-            request: ChatCompletionsRequest, options: typing.Annotated[dict[str, typing.Any], "model:RAGToolOptions"]
+            request: ChatCompletionsRequest, options: RAGToolOptions | dict[str, typing.Any]
         ) -> ChatCompletionsRequest:
             """
             Sets the RAG tool to be used for the chat completion.
@@ -122,12 +100,21 @@ class ChatCompletionsEndpointController(NexosAIAPIEndpointController):
             if request.tools is None:
                 request.tools = []
 
-            request.tools.append(create_rag_tool(options))
+            if isinstance(options, dict):
+                # If options is a dictionary, convert it to RAGToolOptions
+                options = RAGToolOptions(**options)
+
+            request.tools.append(
+                {
+                    "type": str(ToolType.RAG),
+                    str(ToolType.RAG): {"mcp": options.model_dump()},
+                }
+            )
             return request
 
         @staticmethod
         def with_ocr_tool(
-            request: ChatCompletionsRequest, options: typing.Annotated[dict[str, typing.Any], "model:OCRToolOptions"]
+            request: ChatCompletionsRequest, options: OCRToolOptions | dict[str, typing.Any]
         ) -> ChatCompletionsRequest:
             """
             Sets the OCR tool to be used for the chat completion.
@@ -139,7 +126,16 @@ class ChatCompletionsEndpointController(NexosAIAPIEndpointController):
             if request.tools is None:
                 request.tools = []
 
-            request.tools.append(create_ocr_tool(options))
+            if isinstance(options, dict):
+                # If options is a dictionary, convert it to OCRToolOptions
+                options = OCRToolOptions(**options)
+
+            request.tools.append(
+                {
+                    "type": str(ToolType.OCR),
+                    str(ToolType.OCR): options.model_dump(),
+                }
+            )
             return request
 
         @staticmethod

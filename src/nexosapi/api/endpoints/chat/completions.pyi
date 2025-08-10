@@ -1,6 +1,5 @@
 from __future__ import annotations
 import typing
-import typing
 from nexosapi.api.controller import NexosAIAPIEndpointController as NexosAIAPIEndpointController
 from nexosapi.domain.metadata import (
     ChatThinkingModeConfiguration as ChatThinkingModeConfiguration,
@@ -9,17 +8,12 @@ from nexosapi.domain.metadata import (
     ToolChoiceAsDictionary as ToolChoiceAsDictionary,
     ToolChoiceFunction as ToolChoiceFunction,
     ToolType as ToolType,
-    WebSearchToolMCP as WebSearchToolMCP,
     WebSearchToolOptions as WebSearchToolOptions,
-    WebSearchUserLocation as WebSearchUserLocation,
 )
 from nexosapi.domain.requests import ChatCompletionsRequest as ChatCompletionsRequest
 from nexosapi.domain.responses import ChatCompletionsResponse as ChatCompletionsResponse
-from nexosapi.domain.responses import ChatCompletionsResponseData
-from nexosapi.domain.requests import ChatCompletionsRequestData
-from nexosapi.domain.metadata import OCRToolOptionsData, RAGToolOptionsData, WebSearchToolOptionsData
 
-def create_web_search_tool(options: dict[str, typing.Any] | None = None) -> dict[str, typing.Any]:
+def create_web_search_tool(options: WebSearchToolOptions | None = None) -> dict[str, typing.Any]:
     """
     Creates a definition for a web search tool.
 
@@ -27,19 +21,12 @@ def create_web_search_tool(options: dict[str, typing.Any] | None = None) -> dict
     :return: A dictionary representing the web search tool definition.
     """
 
-def create_ocr_tool(options: dict[str, typing.Any]) -> dict[str, typing.Any]:
+def create_ocr_tool(options: OCRToolOptions) -> dict[str, typing.Any]:
     """
     Creates a definition for an OCR tool.
 
     :param options: Additional options for the OCR tool, if any.
     :return: A dictionary representing the OCR tool definition.
-    """
-
-def create_rag_tool(options: dict[str, typing.Any]) -> dict[str, typing.Any]:
-    """
-    Creates a definition for a RAG tool.
-    :param options: Additional options for the RAG tool, if any.
-    :return: A dictionary representing the RAG tool definition.
     """
 
 class ChatCompletionsEndpointController(NexosAIAPIEndpointController):
@@ -57,23 +44,26 @@ class ChatCompletionsEndpointController(NexosAIAPIEndpointController):
 
         @staticmethod
         def with_search_engine_tool(
-            options: WebSearchToolOptionsData,
+            options: WebSearchToolOptions | dict[str, typing.Any],
         ) -> ChatCompletionsEndpointController.RequestManager:
             """Sets the search engine to be used for the chat completion.
 
             :param options: Optional search options to be used with the search engine.
-            :type options: WebSearchToolOptions
             :return: The updated request object with the search engine set."""
 
         @staticmethod
-        def with_rag_tool(options: RAGToolOptionsData) -> ChatCompletionsEndpointController.RequestManager:
+        def with_rag_tool(
+            options: RAGToolOptions | dict[str, typing.Any],
+        ) -> ChatCompletionsEndpointController.RequestManager:
             """Sets the RAG tool to be used for the chat completion.
 
             :param options: Additional options for the RAG tool, if any.
             :return: The updated request object with the RAG tool set."""
 
         @staticmethod
-        def with_ocr_tool(options: OCRToolOptionsData) -> ChatCompletionsEndpointController.RequestManager:
+        def with_ocr_tool(
+            options: OCRToolOptions | dict[str, typing.Any],
+        ) -> ChatCompletionsEndpointController.RequestManager:
             """Sets the OCR tool to be used for the chat completion.
 
             :param options: Additional options for the OCR tool, if any.
@@ -114,20 +104,22 @@ class ChatCompletionsEndpointController(NexosAIAPIEndpointController):
             :param endpoint: The endpoint string in the format "verb: /path".
             :return: The path (e.g., "/path")."""
 
-        def prepare(self, data: ChatCompletionsRequestData) -> ChatCompletionsEndpointController.RequestManager:
+        def prepare(
+            self, data: ChatCompletionsRequest | dict[str, typing.Any]
+        ) -> ChatCompletionsEndpointController.RequestManager:
             """
             Prepare the request data by initializing the pending request.
 
             :param data: The data to be included in the request.
             :return: The current instance of the RequestManager for method chaining."""
 
-        def dump(self) -> ChatCompletionsRequestData:
+        def dump(self) -> dict[str, typing.Any]:
             """
             Show the current pending request data.
 
             :return: The pending request data or None if not set."""
 
-        def send(self) -> ChatCompletionsResponseData:
+        async def send(self) -> ChatCompletionsResponse:
             """
             Call the endpoint with the provided request data.
 
@@ -139,5 +131,4 @@ class ChatCompletionsEndpointController(NexosAIAPIEndpointController):
 
             :return: The current instance of the RequestManager for method chaining."""
 
-    _RequestManager = RequestManager
-    request = RequestManager()
+    request: ChatCompletionsEndpointController.RequestManager

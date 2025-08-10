@@ -1,13 +1,13 @@
 import typing
 
 import pydantic
-from pydantic import BaseModel
 
+from nexosapi.domain.base import NullableBaseModel
 from nexosapi.domain.data import AudioConfiguration, ChatMessage, PredictionType
 from nexosapi.domain.metadata import ChatThinkingModeConfiguration
 
 
-class NexosAPIRequest(BaseModel):
+class NexosAPIRequest(NullableBaseModel):
     """
     Base class for all API requests to the NEXOS API.
     This class serves as a foundation for defining specific API request models.
@@ -26,7 +26,7 @@ class ChatCompletionsRequest(NexosAPIRequest):
     top_logprobs: int | None = pydantic.Field(ge=0, le=20, default=None)
     max_completion_tokens: int | None = None
     n: int = pydantic.Field(ge=1, le=128, default=1)
-    modalities: list[typing.Literal["text", "audio"]] = ["text"]
+    modalities: list[typing.Literal["text", "audio"]] = ["text"]  # noqa: RUF012
     prediction: PredictionType | None = None
     presence_penalty: float = 0.0
     audio: AudioConfiguration | None = None
@@ -59,7 +59,7 @@ class AudioTranscriptionRequest(NexosAPIRequest):
     prompt: str | None = None
     response_format: typing.Literal["json", "text", "srt", "verbose_json", "vtt"] = "json"
     temperature: float = 0.0
-    timestamp_granularities: list[typing.Literal["word", "segment"]] = ["segment"]
+    timestamp_granularities: list[typing.Literal["word", "segment"]] = ["segment"]  # noqa: RUF012
 
 
 class AudioTranslationRequest(NexosAPIRequest):

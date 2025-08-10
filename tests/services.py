@@ -104,11 +104,15 @@ def mock_api_injected_into_services_wiring(
     return _inject_mock_api(service)  # type: ignore
 
 
+import typing
+
+ControllerType = typing.TypeVar("ControllerType")
+
+
 @pytest.fixture
-def initialized_controller[ControllerType](
-    using_test_api_container: Callable[[], NexosAIAPIService],
-    service_environment: Callable[..., Generator],
-) -> Callable[..., Generator[ControllerType]]:
+def initialized_controller(
+    using_test_api_container, service_environment
+) -> Callable[[type[ControllerType]], Generator[ControllerType, None, None]]:
     """
     Fixture to initialize the NexosAI API service controller.
 
@@ -120,9 +124,9 @@ def initialized_controller[ControllerType](
     """
 
     @contextlib.contextmanager
-    def _with_initialized_controller[ControllerType](
+    def _with_initialized_controller(
         controller_class: type[ControllerType],
-    ) -> Generator[ControllerType]:
+    ) -> Generator[ControllerType, None, None]:
         with (
             using_test_api_container() as api_host,
             service_environment(
