@@ -26,7 +26,7 @@ CONTROLLERS_REGISTRY: dict[str, NexosAIAPIEndpointController] = {}
 
 
 @dataclasses.dataclass
-class NexosAIAPIEndpointController(typing.Generic[EndpointRequestType, EndpointResponseType]):  # noqa: UP046
+class NexosAIAPIEndpointController(typing.Generic[EndpointRequestType, EndpointResponseType]):
     """
     Abstract base class for NexosAI endpoint controllers.
     This class defines the structure for endpoint controllers in the Nexos AI API.
@@ -248,6 +248,7 @@ class NexosAIAPIEndpointController(typing.Generic[EndpointRequestType, EndpointR
         Raises ValueError if the endpoint does not match the expected format.
         """
         CONTROLLERS_REGISTRY[self.__class__._RequestManager.__name__] = self
+        self.request = self._RequestManager()
         self.operations = self.Operations()
 
     async def on_response(self, response: EndpointResponseType) -> EndpointResponseType:

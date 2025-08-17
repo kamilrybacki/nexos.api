@@ -11,7 +11,11 @@ if os.environ.get("NEXOSAI_INIT__LOAD_DOTENV", "false").lower() == "true":
     # This is useful for local development or testing environments
     import dotenv
 
-    dotenv.load_dotenv()
+    dotenv.load_dotenv(
+        os.environ.get("NEXOSAI_INIT__DOTENV_PATH", ".env"),
+        override=True,
+        verbose=True,
+    )
 
 
 if os.environ.get("NEXOSAI_INIT__DISABLE_AUTOWIRING", "false").lower() == "false":

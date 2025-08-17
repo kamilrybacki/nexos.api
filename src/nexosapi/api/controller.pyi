@@ -112,6 +112,13 @@ class NexosAIAPIEndpointController(typing.Generic[EndpointRequestType, EndpointR
             :return: The current instance of the RequestManager for method chaining.
             """
 
+        def pretty_print(self) -> dict[str, typing.Any]:
+            """
+            Pretty prints the current request data.
+
+            :return: A dictionary representation of the pending request data.
+            """
+
         def __getattr__(self, target: str) -> typing.Any:
             """
             Redirect any getattr calls to the operations defined

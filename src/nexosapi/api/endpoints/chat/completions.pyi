@@ -1,6 +1,7 @@
 from __future__ import annotations
 import typing
 from nexosapi.api.controller import NexosAIAPIEndpointController as NexosAIAPIEndpointController
+from nexosapi.domain.data import ChatMessage as ChatMessage
 from nexosapi.domain.metadata import (
     ChatThinkingModeConfiguration as ChatThinkingModeConfiguration,
     OCRToolOptions as OCRToolOptions,
@@ -90,6 +91,24 @@ class ChatCompletionsEndpointController(NexosAIAPIEndpointController):
         def with_tool_choice(tool_choice: str) -> ChatCompletionsEndpointController.RequestManager:
             """"""
 
+        @staticmethod
+        def add_image_to_last_message(
+            image_url: str | None = None, image: bytes | None = None
+        ) -> ChatCompletionsEndpointController.RequestManager:
+            """Adds an image to the last message in the chat completion request.
+
+            :param image_url: The URL of the image to be included in the request.
+            :param image: The image data to be included in the request.
+            :return: The updated request object with the image included."""
+
+        @staticmethod
+        def add_text_message(text: str, role: str = "user") -> ChatCompletionsEndpointController.RequestManager:
+            """Adds a text message to the chat completion request.
+
+            :param text: The content of the message, which can include text, images, etc.
+            :param role: The role of the message sender (e.g., "user", "assistant"). Defaults to "user".
+            :return: The updated request object with the new message added."""
+
         def get_verb_from_endpoint(self, endpoint: str) -> str:
             """
             Extract the HTTP verb from the endpoint string.
@@ -130,5 +149,11 @@ class ChatCompletionsEndpointController(NexosAIAPIEndpointController):
             Reload the last request to reuse it for the next operation.
 
             :return: The current instance of the RequestManager for method chaining."""
+
+        def pretty_print(self) -> dict[str, typing.Any]:
+            """
+            Pretty prints the current request data.
+
+            :return: A dictionary representation of the pending request data."""
 
     request: ChatCompletionsEndpointController.RequestManager

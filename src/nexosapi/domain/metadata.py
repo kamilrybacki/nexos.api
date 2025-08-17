@@ -243,10 +243,10 @@ class OCRToolOptions(NullableBaseModel):
 
 
 class UrlCitation(NullableBaseModel):
-    end_index: int
-    start_index: int
-    title: str
-    url: str
+    end_index: int | None = None
+    start_index: int | None = None
+    title: str | None = None
+    url: str | None = None
 
 
 class Annotation(NullableBaseModel):

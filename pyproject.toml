@@ -81,9 +81,11 @@ ignore = [
     "SLF001",
     "FBT001",
     "FBT002",
+    "UP046",
 ]
 exclude = [
     "*.pyi",  # ignore type stubs
+    "*.ipynb",  # ignore Jupyter notebooks
     "tests/**",  # ignore tests
     "make/**",  # ignore types compiler and other build utils
 ]

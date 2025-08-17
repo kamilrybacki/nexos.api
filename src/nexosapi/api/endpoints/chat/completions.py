@@ -2,6 +2,7 @@ import logging
 import typing
 
 from nexosapi.api.controller import NexosAIAPIEndpointController
+from nexosapi.domain.data import ChatMessage
 from nexosapi.domain.metadata import (
     ChatThinkingModeConfiguration,
     OCRToolOptions,
@@ -190,4 +191,53 @@ class ChatCompletionsEndpointController(NexosAIAPIEndpointController):
                 request.tool_choice = validated_tool_choice_settings.model_dump()
             else:
                 request.tool_choice = tool_choice
+            return request
+
+        @staticmethod
+        def add_image_to_last_message(
+            request: ChatCompletionsRequest, image_url: str | None = None, image: bytes | None = None
+        ) -> ChatCompletionsRequest:
+            """
+            Adds an image to the last message in the chat completion request.
+
+            :param request: The request object containing the chat completion parameters.
+            :param image_url: The URL of the image to be included in the request.
+            :param image: The image data to be included in the request.
+            :return: The updated request object with the image included.
+            """
+            if not image_url and not image:
+                logging.warning("[SDK] No image provided. Skipping adding image to the request.")
+                return request
+
+            if len(request.messages) > 0 and request.messages[-1].role == "user":
+                # If the last message is from the user, append the image to it
+                if isinstance(request.messages[-1].content, list):
+                    request.messages[-1].content.append({"type": "image_url", "image_url": {"url": image_url or image}})
+                if isinstance(request.messages[-1].content, str):
+                    request.messages[-1].content = [
+                        {"type": "text", "text": request.messages[-1].content},
+                        {"type": "image_url", "image_url": {"url": image_url or image}},
+                    ]
+            if (len(request.messages) > 0 and request.messages[-1].role != "user") or len(request.messages) == 0:
+                request.messages.append(
+                    ChatMessage(role="user", content=[{"type": "image_url", "image_url": {"url": image_url or image}}])
+                )
+
+            return request
+
+        @staticmethod
+        def add_text_message(
+            request: ChatCompletionsRequest,
+            text: str,
+            role: str = "user",
+        ) -> ChatCompletionsRequest:
+            """
+            Adds a text message to the chat completion request.
+
+            :param request: The request object containing the chat completion parameters.
+            :param text: The content of the message, which can include text, images, etc.
+            :param role: The role of the message sender (e.g., "user", "assistant"). Defaults to "user".
+            :return: The updated request object with the new message added.
+            """
+            request.messages.append(ChatMessage(role=role, content=text))
             return request
