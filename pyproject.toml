@@ -82,6 +82,8 @@ ignore = [
     "FBT001",
     "FBT002",
     "UP046",
+    "D413",
+    "D412",
 ]
 exclude = [
     "*.pyi",  # ignore type stubs

@@ -39,20 +39,18 @@ class NullableBaseModel(BaseModel):
         if hasattr(field, "null"):
             return field.null
 
-        if hasattr(field, "default") and not isinstance(field.default, (PydanticUndefinedType, PydanticUndefined)):
+        if hasattr(field, "default") and not isinstance(field.default, (PydanticUndefinedType, PydanticUndefined)):  # type: ignore
             return field.default
 
         if hasattr(field, "__name__") and "Literal" in field.__name__:
             return None
 
-        """
-        Try to call the origin if it is callable.
-        This is useful for cases where the origin is a class or function
-        that can be instantiated or called without arguments.
+        # Try to call the origin if it is callable.
+        # This is useful for cases where the origin is a class or function
+        # that can be instantiated or called without arguments.
 
-        In case of types which cannot be instantiated, we skip returning the origin
-        and proceed with the next checks.
-        """
+        # In case of types which cannot be instantiated, we skip returning the origin
+        # and proceed with the next checks.
         origin = typing.get_origin(field)
         try:
             origin()  # type: ignore
@@ -78,10 +76,12 @@ class NullableBaseModel(BaseModel):
         """
         Inspects the fields of the model and returns a dictionary of field names and their types.
         This is useful for dynamically constructing instances of the model.
+
+        :return: A dictionary mapping field names to their default values.
         """
         fields = {}
         for field_name, field_type in cls.model_fields.items():
-            constructor = cls._construct_from_annotation(field_type.annotation)
+            constructor = cls._construct_from_annotation(field_type.annotation)  # type: ignore
             if constructor is not None:
                 fields[field_name] = constructor()
         return fields
@@ -92,7 +92,8 @@ class NullableBaseModel(BaseModel):
         Returns a null instance of the model with all fields set to None.
         This is useful for cases where no data is expected.
 
-        :param quiet: If True, suppresses logging of the null response.
+        :param quiet: If True, suppresses logging of the null response (default: True)
+        :return: A null instance of the model with all fields set to None.
         """
         nulled_data = cls._inspect_fields()
         non_empty_fields_data = {k: v for k, v in nulled_data.items() if v is not None}
@@ -118,6 +119,21 @@ class NullableBaseModel(BaseModel):
     ) -> dict[str, Any]:
         """
         Dumps the model to a dictionary, excluding fields that are None.
+
+        :param mode: The mode to use for dumping the model (json or python).
+        :param include: Fields to include in the output.
+        :param exclude: Fields to exclude from the output.
+        :param context: Contextual information to include in the output.
+        :param by_alias: Whether to use field aliases in the output.
+        :param exclude_unset: Whether to exclude unset fields from the output.
+        :param exclude_defaults: Whether to exclude fields with default values from the output.
+        :param exclude_none: Whether to exclude fields with None values from the output.
+        :param round_trip: Whether to enable round-trip serialization.
+        :param warnings: Warning level for the serialization process.
+        :param fallback: Fallback function to call in case of serialization errors.
+        :param serialize_as_any: Whether to serialize the model as "any" type.
+
+        :return: A dictionary representation of the model.
         """
         return super().model_dump(
             mode=mode,

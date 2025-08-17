@@ -5,9 +5,7 @@ def setup_logging(level: int) -> logging.Logger:
     """
     Set up the logging configuration for the application.
 
-    Args:
-        level (int): The logging level to set.
-
+    :param level: The logging level to set.
     """
     # Clear any existing handlers
     for handler in logging.root.handlers[:]:

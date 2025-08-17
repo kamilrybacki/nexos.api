@@ -49,6 +49,10 @@ def create_ocr_tool(
 
 
 class ChatCompletionsEndpointController(NexosAIAPIEndpointController):
+    """
+    Controller for handling chat completions endpoint of NexosAI.
+    """
+
     endpoint = "post:/chat/completions"
     response_model = ChatCompletionsResponse
     request_model = ChatCompletionsRequest
@@ -185,7 +189,13 @@ class ChatCompletionsEndpointController(NexosAIAPIEndpointController):
             request: ChatCompletionsRequest,
             tool_choice: str,
         ) -> ChatCompletionsRequest:
-            # Check if passed tool_choice is a string in format 'name:<function_name>'
+            """
+            Sets the tool choice for the chat completion request e.g. "auto" or to specific function name using "name:<function_name>" selector.
+
+            :param request: The request object containing the chat completion parameters.
+            :param tool_choice: The tool choice to be set for the request.
+            :return: The updated request object with the tool choice set.
+            """
             if tool_choice.startswith("name:"):
                 validated_tool_choice_settings = ToolChoiceAsDictionary(
                     type="function",

@@ -28,6 +28,12 @@ if os.environ.get("NEXOSAI_INIT__DISABLE_AUTOWIRING", "false").lower() == "false
 
 @dataclasses.dataclass(frozen=True)
 class ChatEndpoints:
+    """
+    Main interface for accessing specific endpoint controllers e.g. chat completions or image generation.
+
+    :ivar completions: Controller for handling chat completions.
+    """
+
     completions: ClassVar[ChatCompletionsEndpointController] = ChatCompletionsEndpointController()
 
 

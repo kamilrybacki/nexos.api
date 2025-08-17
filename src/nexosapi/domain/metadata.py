@@ -79,6 +79,10 @@ class ToolModule(typing.TypedDict, total=False):
 
 
 class WebSearchUserLocation(NullableBaseModel):
+    """
+    Represents the user's location for web search purposes.
+    """
+
     type: typing.Literal["approximate"] = "approximate"
     city: str | None = None
     country: str | None = None
@@ -87,6 +91,10 @@ class WebSearchUserLocation(NullableBaseModel):
 
 
 class WebSearchToolMCP(NullableBaseModel):
+    """
+    Represents the metadata configuration for a web search tool.
+    """
+
     type: typing.Literal["url", "query"] = "query"
     tool: typing.Literal["google_search", "bing_search", "amazon_search", "universal"] = "google_search"
     query: str | None = None
@@ -173,6 +181,10 @@ class WebSearchToolMCP(NullableBaseModel):
 
 
 class WebSearchToolOptions(NullableBaseModel):
+    """
+    Represents the options for a web search tool, passed to the request maker method.
+    """
+
     search_context_size: typing.Literal["low", "medium", "high"] | None = None
     user_location: WebSearchUserLocation | None = None
     mcp: WebSearchToolMCP | None = None
@@ -250,6 +262,10 @@ class UrlCitation(NullableBaseModel):
 
 
 class Annotation(NullableBaseModel):
+    """
+    Represents a reference/citation annotation, created from a citation entry found in the response text.
+    """
+
     type: str
     url_citation: UrlCitation
 
@@ -285,6 +301,6 @@ class LogProbs(LogProb):
 
 
 class LogProbsInfo(NullableBaseModel):
-    model_config: typing.ClassVar[dict[str, typing.Any]] = {"arbitrary_types_allowed": True}
+    model_config: typing.ClassVar[dict[str, typing.Any]] = {"arbitrary_types_allowed": True}  # type: ignore
     content: LogProbs | None = None
     refusal: LogProbs | None = None

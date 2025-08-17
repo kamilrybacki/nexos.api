@@ -14,6 +14,14 @@ class ServiceName(StrEnum):
 
 @dataclasses.dataclass(kw_only=True)
 class WiringDictionaryEntry:
+    """
+    Class representing a wiring dictionary entry for dependency injection.
+
+    :ivar service_class: The service class to be wired.
+    :ivar provider_class: The provider class to be used for the service.
+    :ivar modules: The modules that require this service.
+    """
+
     service_class: type
     provider_class: type[Provider]
     modules: set[str]
@@ -30,6 +38,13 @@ SDK_SERVICES_CONTAINER: DynamicContainer = DynamicContainer()
 
 
 def populate_container(container: DynamicContainer, providers_config: dict[str, WiringDictionaryEntry]) -> set[str]:
+    """
+    Populate the dependency injection container with the provided services.
+
+    :param container: The dependency injection container to populate.
+    :param providers_config: The configuration dictionary containing service providers.
+    :return: A set of module names that the container will be wired to.
+    """
     modules_to_wire = set()
     for provider_name, provider_info in providers_config.items():
         provided_cls = provider_info.service_class

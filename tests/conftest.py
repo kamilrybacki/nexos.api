@@ -5,8 +5,6 @@ from pathlib import Path
 
 import pytest
 import testcontainers.core.config
-import testcontainers.core.container
-import testcontainers.core.waiting_utils
 
 import nexosapi.domain.requests
 import nexosapi.domain.responses

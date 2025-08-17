@@ -22,6 +22,19 @@ class CitationEntryExtractedData(TypedDict):
 
 
 class ChatMessage(NullableBaseModel):
+    """
+    Model representing a chat message, contained within a request or response model under messages or choices field.
+
+    :ivar role: The role of the message sender (user, assistant, etc.).
+    :ivar refusal: The refusal message, if applicable.
+    :ivar tool_calls: A list of tool calls made during the message.
+    :ivar content: The content of the message.
+    :ivar audio: The audio data associated with the message.
+    :ivar annotations: Any annotations associated with the message.
+    :ivar name: The name of the message sender.
+    :ivar thinking: The thinking process associated with the message.
+    """
+
     role: Literal["system", "user", "assistant", "tool", "function", "developer"] = "user"
     refusal: str | None = None
     tool_calls: list[ToolCall] | None = None
