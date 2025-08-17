@@ -13,6 +13,7 @@ from nexosapi.domain.metadata import (
 )
 from nexosapi.domain.requests import ChatCompletionsRequest as ChatCompletionsRequest
 from nexosapi.domain.responses import ChatCompletionsResponse as ChatCompletionsResponse
+from pydantic import BaseModel as BaseModel
 
 def create_web_search_tool(options: WebSearchToolOptions | None = None) -> dict[str, typing.Any]:
     """
@@ -109,6 +110,15 @@ class ChatCompletionsEndpointController(NexosAIAPIEndpointController):
             :param role: The role of the message sender (e.g., "user", "assistant"). Defaults to "user".
             :return: The updated request object with the new message added."""
 
+        @staticmethod
+        def set_response_structure(
+            schema: dict[str, typing.Any] | type[BaseModel],
+        ) -> ChatCompletionsEndpointController.RequestManager:
+            """Sets the response structure for the chat completion request.
+
+            :param schema: The desired response schema (e.g., a Pydantic model).
+            :return: The updated request object with the response structure set."""
+
         def get_verb_from_endpoint(self, endpoint: str) -> str:
             """
             Extract the HTTP verb from the endpoint string.
@@ -149,11 +159,5 @@ class ChatCompletionsEndpointController(NexosAIAPIEndpointController):
             Reload the last request to reuse it for the next operation.
 
             :return: The current instance of the RequestManager for method chaining."""
-
-        def pretty_print(self) -> dict[str, typing.Any]:
-            """
-            Pretty prints the current request data.
-
-            :return: A dictionary representation of the pending request data."""
 
     request: ChatCompletionsEndpointController.RequestManager

@@ -102,10 +102,4 @@ class EndpointControllerWithCustomOperations(NexosAIAPIEndpointController):
 
             :return: The current instance of the RequestManager for method chaining."""
 
-        def pretty_print(self) -> dict[str, typing.Any]:
-            """
-            Pretty prints the current request data.
-
-            :return: A dictionary representation of the pending request data."""
-
     request: EndpointControllerWithCustomOperations.RequestManager

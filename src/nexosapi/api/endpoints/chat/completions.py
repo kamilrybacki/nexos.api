@@ -1,5 +1,8 @@
+import json
 import logging
 import typing
+
+from pydantic import BaseModel
 
 from nexosapi.api.controller import NexosAIAPIEndpointController
 from nexosapi.domain.data import ChatMessage
@@ -240,4 +243,28 @@ class ChatCompletionsEndpointController(NexosAIAPIEndpointController):
             :return: The updated request object with the new message added.
             """
             request.messages.append(ChatMessage(role=role, content=text))
+            return request
+
+        @staticmethod
+        def set_response_structure(
+            request: ChatCompletionsRequest, schema: dict[str, typing.Any] | type[BaseModel]
+        ) -> ChatCompletionsRequest:
+            """
+            Sets the response structure for the chat completion request.
+
+            :param request: The request object containing the chat completion parameters.
+            :param schema: The desired response schema (e.g., a Pydantic model).
+            :return: The updated request object with the response structure set.
+            """
+            schema_system_message = ChatMessage(
+                role="system",
+                content=f"""
+                Please provide a response in the following JSON format:
+                {json.dumps(schema if isinstance(schema, dict) else schema.model_json_schema())}
+                """,
+            )
+            request.messages.append(schema_system_message)
+            request.response_format = {
+                "type": "json_object"  # Specify that we want a JSON object response!
+            }
             return request
