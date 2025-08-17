@@ -82,8 +82,8 @@ def test_controller_with_custom_operations() -> None:
     latest_request_data = controller.request.pending
     controller.request.with_switched_field_values()
     assert controller.request.pending.model_dump() == {
-        "key": latest_request_data["value"],
-        "value": latest_request_data["key"],
+        "key": latest_request_data.value,
+        "value": latest_request_data.key,
     }
 
     hardcoded_value = MockResponseModel.__doc__.lower()

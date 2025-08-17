@@ -40,7 +40,7 @@ async def test_sending_request(initialized_controller, caplog) -> None:
         assert "HTTP/1.1 200 OK" in caplog.text, "The response should indicate a successful request."
 
         expected_fields = controller.response_model.null().model_dump()
-        assert all(field in response for field in expected_fields), (
+        assert all(field in response.model_dump() for field in expected_fields), (
             f"The response should contain all expected fields: {expected_fields}."
         )
 
