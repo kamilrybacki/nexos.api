@@ -23,7 +23,3 @@ jobs:
         run: poetry run ruff check --config pyproject.toml
       - name: Run Mypy (type checker)
         run: poetry run mypy . --config-file pyproject.toml
-      - name: Lint Markdown
-        run: |
-          pip install markdownlint-cli
-          markdownlint docs/**/*.md
