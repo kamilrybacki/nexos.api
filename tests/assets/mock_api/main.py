@@ -65,7 +65,7 @@ def endpoint_to_handler(
         logging.info(f"[TEST] Mock API called: {request.method} {request.url.path}")
         return fastapi.Response(content=json.dumps(response), media_type="application/json")
 
-    return mock_api_handler  # type: ignore
+    return mock_api_handler
 
 
 def setup_routes() -> None:

@@ -49,7 +49,7 @@ def initialize_nexosai_api_service() -> Callable[[], NexosAIAPIService]:
 
 
 MOCK_API_DATA_JSON_PATH = (ASSETS_DIR / "mock_api" / "data.json").as_posix()
-MOCK_API_DATA = json.loads(Path.open(MOCK_API_DATA_JSON_PATH).read())
+MOCK_API_DATA = json.loads(Path.open(MOCK_API_DATA_JSON_PATH).read())  # type: ignore
 
 
 @pytest.fixture
@@ -91,7 +91,7 @@ def mock_api_injected_into_services_wiring(
                 "nexosapi.config.setup.WIRING",
                 {
                     ServiceName.NEXOSAI_API_HTTP_CLIENT: WiringDictionaryEntry(
-                        service_class=mock_service,  # type: ignore
+                        service_class=mock_service,
                         provider_class=Singleton,
                         modules={"nexosapi.api.controller"},
                     )
@@ -99,9 +99,9 @@ def mock_api_injected_into_services_wiring(
             ):
                 yield
         finally:
-            service._api_service = original_services_wiring
+            service._api_service = original_services_wiring  # type: ignore
 
-    return _inject_mock_api(service)  # type: ignore
+    return _inject_mock_api(service)
 
 
 import typing
@@ -140,4 +140,4 @@ def initialized_controller(
             wire_sdk_dependencies()
             yield controller_class()
 
-    return _with_initialized_controller
+    return _with_initialized_controller  # type: ignore

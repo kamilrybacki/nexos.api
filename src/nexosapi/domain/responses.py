@@ -176,7 +176,7 @@ class ModelsListResponse(NexosAPIResponse):
     total: int
 
 
-class TeamApiKeyListResponse(NexosAPIResponse, pydantic.RootModel):
+class TeamApiKeyListResponse(NexosAPIResponse, pydantic.RootModel):  # type: ignore
     root: list[TeamApiKey]
 
 

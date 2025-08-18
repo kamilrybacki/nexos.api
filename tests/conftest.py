@@ -36,8 +36,8 @@ def add_test_domain_models() -> Generator[None]:
     Adds the test domain models to the global namespace.
     This is necessary for the tests to access the domain models.
     """
-    nexosapi.domain.requests.MockRequestModel = MockRequestModel
-    nexosapi.domain.responses.MockResponseModel = MockResponseModel
+    nexosapi.domain.requests.MockRequestModel = MockRequestModel  # type: ignore
+    nexosapi.domain.responses.MockResponseModel = MockResponseModel  # type: ignore
     yield
     # Cleanup if necessary
     delattr(nexosapi.domain.requests, "MockRequestModel")

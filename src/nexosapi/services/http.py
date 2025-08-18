@@ -69,7 +69,7 @@ class NexosAIAPIService:
             )
 
         self.client = __spawn_client
-        self.request = retry_strategy(self.request)
+        setattr(self, "request", retry_strategy(self.request))  # noqa: B010
 
     def construct_headers(self, config: NexosAIAPIConfiguration) -> dict[str, str]:
         """
