@@ -48,7 +48,7 @@ NexosAI is an advanced AI platform offering:
 
 - [Configuration Guide](configuration.md): Set up your environment and credentials
 - [Usage Examples](usage.md): See practical code samples for each endpoint
-- [Domain Models](domain-models.md): Learn about type hinting and autocompletion
+- [Domain Models](models.md): Learn about type hinting and autocompletion
 - [Chat Completions Endpoint](endpoints/chat-completions.md): Deep dive into chat operations
 
 ---

@@ -29,9 +29,10 @@ nav:
 - Installation: installation.md
 - Configuration: configuration.md
 - Usage Examples: usage.md
-- Domain Models & Type Hinting: domain-models.md
+- Domain Models & Type Hinting: models.md
 - Endpoints:
     - Chat Completions: endpoints/chat-completions.md
+- Developer Guide: developer_guide.md
 
 plugins:
 - glightbox
