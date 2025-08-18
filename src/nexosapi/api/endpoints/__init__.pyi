@@ -9,6 +9,12 @@ from typing import ClassVar
 
 @dataclasses.dataclass(frozen=True)
 class ChatEndpoints:
+    """
+    Main interface for accessing specific endpoint controllers e.g. chat completions or image generation.
+
+    :ivar completions: Controller for handling chat completions.
+    """
+
     completions: ClassVar[ChatCompletionsEndpointController] = ...
 
 chat: ChatEndpoints

@@ -1,0 +1,91 @@
+site_name: NexosAI API SDK
+site_description: NexosAI API SDK for Python 
+strict: true
+
+theme:
+  name: 'material'
+  language: en
+  features:
+    - content.tabs.link
+    - content.code.annotate
+    - content.code.copy
+    - announce.dismiss
+    - navigation.tabs
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.instant.preview
+    - navigation.instant.progress
+    - navigation.path
+    - navigation.sections
+    - navigation.top
+    - navigation.tracking
+    - search.suggest
+    - toc.follow
+
+  favicon: 'favicon.png'
+
+nav:
+- Home: index.md
+- Installation: installation.md
+- Configuration: configuration.md
+- Usage Examples: usage.md
+- Domain Models & Type Hinting: domain-models.md
+- Endpoints:
+    - Chat Completions: endpoints/chat-completions.md
+
+plugins:
+- glightbox
+- social
+- mike:
+    alias_type: symlink
+    canonical_version: latest
+- search
+- panzoom:
+    full_screen: True
+- exclude:
+    glob:
+    - theme/announce.html
+    - plugins/*
+    - __pycache__/*
+- mkdocs-autoapi:
+    autoapi_ignore:
+      - "**/__init__.py"
+    autoapi_add_nav_entry: Reference
+    autoapi_dir: src/nexosapi
+- mkdocstrings:
+    handlers:
+      python:
+        paths:
+          - .
+          - src
+        options:
+          docstring_style: sphinx
+          members_order: source
+          separate_signature: true
+          filters: ["!^_"]
+          docstring_options:
+            ignore_init_summary: true
+          merge_init_into_class: true
+          show_signature_annotations: true
+          signature_crossrefs: true
+
+        inventories:
+          - url: https://docs.python.org/3/objects.inv
+            domains: [py, std]
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - admonition
+  - pymdownx.details
+  - toc:
+      toc_depth: 3
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format

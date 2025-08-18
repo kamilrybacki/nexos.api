@@ -32,6 +32,10 @@ def create_ocr_tool(options: OCRToolOptions) -> dict[str, typing.Any]:
     """
 
 class ChatCompletionsEndpointController(NexosAIAPIEndpointController):
+    """
+    Controller for handling chat completions endpoint of NexosAI.
+    """
+
     endpoint: str
     response_model = ChatCompletionsResponse
     request_model = ChatCompletionsRequest
@@ -90,7 +94,10 @@ class ChatCompletionsEndpointController(NexosAIAPIEndpointController):
 
         @staticmethod
         def with_tool_choice(tool_choice: str) -> ChatCompletionsEndpointController.RequestManager:
-            """"""
+            """Sets the tool choice for the chat completion request e.g. "auto" or to specific function name using "name:<function_name>" selector.
+
+            :param tool_choice: The tool choice to be set for the request.
+            :return: The updated request object with the tool choice set."""
 
         @staticmethod
         def add_image_to_last_message(

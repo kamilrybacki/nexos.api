@@ -27,6 +27,14 @@ testcontainers = "^4.10.0"
 types-requests = "^2.32.4.20250611"
 fastapi = "^0.116.1"
 uvicorn = "^0.35.0"
+mkdocstrings-python = "^1.17.0"
+mkdocs-material = { "extras" = ["imaging"], "version" = "^9.6.17" }
+mkdocs-redirects = "^1.2.2"
+mike = "^2.0.0"
+mkdocs-panzoom-plugin = "^0.1.0"
+mkdocs-glightbox = "^0.1.0"
+mkdocs-exclude = "^1.0.2"
+mkdocs-autoapi = "^0.4.1"
 
 [build-system]
 requires = ["poetry-core"]
