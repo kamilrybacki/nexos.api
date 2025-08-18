@@ -1,6 +1,5 @@
 site_name: NexosAI API SDK
 site_description: NexosAI API SDK for Python 
-strict: true
 
 theme:
   name: 'material'

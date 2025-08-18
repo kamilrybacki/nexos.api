@@ -15,7 +15,8 @@ repos:
         name: mypy
         entry: mypy
         language: python
-        files: ^backend/.*\.py$
+        files: ^src/.*\.py$
+        args: [--config-file, pyproject.toml]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.12.3
