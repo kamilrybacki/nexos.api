@@ -1,8 +1,8 @@
-mkdocstrings-python = "^1.17.0"
-mkdocs-material = { "extras" = ["imaging"], "version" = "^9.6.17" }
-mkdocs-redirects = "^1.2.2"
-mike = "^2.0.0"
-mkdocs-panzoom-plugin = "^0.1.0"
-mkdocs-glightbox = "^0.1.0"
-mkdocs-exclude = "^1.0.2"
-mkdocs-autoapi = "^0.4.1"
+mkdocstrings-python==1.17.0
+mkdocs-material[imaging]==9.6.17
+mkdocs-redirects==1.2.2
+mike==2.0.0
+mkdocs-panzoom-plugin==0.1.0
+mkdocs-glightbox==0.1.0
+mkdocs-exclude==1.0.2
+mkdocs-autoapi==0.4.1
