@@ -1,9 +1,12 @@
-[tool.poetry]
+[project]
 name = "nexosapi"
 version = "0.1.0"
 description = "SDK for Nexos API"
-authors = ["Kamil Rybacki <kamilandrzejrybacki@gmail.com>"]
+authors = [{ name = "Kamil Rybacki", email = "kamilandrzejrybacki@gmail.com" }]
 readme = "README.md"
+requires-python = ">=3.12"
+
+[tool.poetry]
 include = ["*.pyi"]
 exclude = ["tests/**", "docs/**", "examples/**", "make/**"]
 
