@@ -34,7 +34,6 @@ nav:
 - Developer Guide: developer_guide.md
 
 plugins:
-- glightbox
 - social
 - mike:
     alias_type: symlink
