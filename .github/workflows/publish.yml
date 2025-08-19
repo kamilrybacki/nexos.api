@@ -26,6 +26,8 @@ jobs:
         python-version: '3.12'
     - name: Install Poetry
       run: pip install poetry
+    - name: Compile stubs
+      run: python ./make/compiler/run.py
     - name: Install dependencies
       run: poetry install --all-extras
     - name: Build package
