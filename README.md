@@ -2,6 +2,8 @@
 
 A modern Python SDK for integrating with the NexosAI cloud service. Easily connect your applications to NexosAI's powerful API for conversational AI, image, and audio processing.
 
+Docs are available [here](https://nexosapi.readthedocs.io/en/latest/).
+
 ---
 
 ## Features
