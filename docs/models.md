@@ -46,11 +46,10 @@ Your IDE will show available methods and their type signatures, making it easy t
 
 ```python
 from nexosapi.api.endpoints import chat
-from nexosapi.domain.requests import ChatCompletionsRequest
 
-request = ChatCompletionsRequest(model="your-model-id", messages=[])
-request = chat.completions.request.with_model(request, "gpt-3.5-turbo")
-request = chat.completions.request.add_text_message(request, "Hello!")
+chat.completions.request.prepare(...)  # Prepare the request with required parameters
+chat.completions.request.with_model(...)  # Set the model for the request
+chat.completions.request.add_text_message("Hello!")  # Add a text message to the request (it will be inserted as a user message into the messages list)
 ```
 
 Your IDE will autocomplete available fields and methods, and warn about type errors.
